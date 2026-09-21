@@ -42,3 +42,13 @@ Operator preferences: minimal surgical edits, no comment bloat, no JSDoc-style h
     29-list come from task-configs.json. Findings: MISSING_SUBCAT (Sunday run will add),
     WILL_REPLACE (Sunday run will change/clean tags; persistent rows after a Sunday =
     investigate), UNPREDICTED_EXISTING (manual tag the tree can't derive; info).
+17. **Collections layer.** Members pull (`--members`) is a second, opt-in bulk op — routine
+    health runs stay light; Adds/Count After are computed only against a members cache and
+    stay blank without one. All suggested rules are ADDITIVE and evaluated by the same
+    matcher parity engine on the stripped title core. Candidate tiers: AUTOMATABLE,
+    COLOUR_VERIFY (Type=Footwear AND Title-colour — always human-verified), REVIEW,
+    KEEP_MANUAL (excluded from the merchant deliverable). Locked Review triggers:
+    "Jersey:" PDP pages, "custom", accented/period/" de " names, brand-only titles,
+    ambiguous entities, type-named curated subsets under the 50% whole-type threshold.
+    Merchant XLSX conventions: ID column as TEXT (never scientific notation), hyperlinked
+    ID/Handle, yellow Approve cells, two sheets (Ready to Automate / Needs Review).

@@ -19,11 +19,17 @@ OUT_DIR = os.environ.get("OUT_DIR", "output")
 CACHE_PRODUCTS_JSONL = os.path.join(OUT_DIR, "catalog-products.jsonl")
 CACHE_COLLECTIONS_JSONL = os.path.join(OUT_DIR, "catalog-collections.jsonl")
 COLLECTIONS_BASELINE = os.path.join(OUT_DIR, "collections-baseline.json")
+CACHE_COLLECTIONS_MEMBERS = os.path.join(OUT_DIR, "catalog-collections-members.jsonl")
 TOKEN_CACHE = os.path.join(OUT_DIR, ".token.json")
 
 TASK_CONFIGS = os.environ.get("TASK_CONFIGS", "task-configs.json")
 SYNC_LAG_HOURS = int(os.environ.get("SYNC_LAG_HOURS", "48"))
 
+
+def run_dir(stamp):
+    path = os.path.join(OUT_DIR, f"audit-{stamp}")
+    os.makedirs(path, exist_ok=True)
+    return path
 
 def admin_product_url(product_id):
     return f"https://admin.shopify.com/store/{STORE_SLUG}/products/{product_id}"

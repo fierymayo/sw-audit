@@ -98,11 +98,11 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
     coverage = pass_addon_coverage(products, cfg)
     if coverage:
         if coverage["missing_tag"]:
-            report.write_rows_csv(os.path.join(config.OUT_DIR, f"addon-missing-tag-{stamp}.csv"),
+            report.write_rows_csv(os.path.join(config.run_dir(stamp), f"addon-missing-tag-{stamp}.csv"),
                                   coverage["missing_tag"],
                                   ["handle", "title", "subcats", "admin_url", "storefront_url"])
         if coverage["stale_tag"]:
-            report.write_rows_csv(os.path.join(config.OUT_DIR, f"addon-stale-tag-{stamp}.csv"),
+            report.write_rows_csv(os.path.join(config.run_dir(stamp), f"addon-stale-tag-{stamp}.csv"),
                                   coverage["stale_tag"],
                                   ["handle", "title", "subcats", "admin_url", "storefront_url"])
         log(f"  addon coverage: missing={len(coverage['missing_tag'])} (expect 0)  "
@@ -113,14 +113,14 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
 
     vendors = pass_vendor_audit(products, cfg)
     if vendors["rows"]:
-        report.write_rows_csv(os.path.join(config.OUT_DIR, f"vendor-audit-{stamp}.csv"),
+        report.write_rows_csv(os.path.join(config.run_dir(stamp), f"vendor-audit-{stamp}.csv"),
                               vendors["rows"], ["vendor", "count", "finding", "suggested"])
     log(f"  vendors: {vendors['distinct_vendors_active']} distinct, {len(vendors['rows'])} finding(s)")
 
     sim = pass_subcat_sim(products, cfg)
     if sim:
         if sim["rows"]:
-            report.write_rows_csv(os.path.join(config.OUT_DIR, f"subcat-sim-{stamp}.csv"),
+            report.write_rows_csv(os.path.join(config.run_dir(stamp), f"subcat-sim-{stamp}.csv"),
                                   sim["rows"], SIM_ROW_FIELDS)
         log("  subcat sim: " + ("  ".join(f"{f}={n}" for f, n in sorted(sim["counts"].items())) or "clean"))
     else:
@@ -128,7 +128,7 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
 
     candidates = pass_no_rule_candidates(products, cfg)
     if candidates:
-        report.write_rows_csv(os.path.join(config.OUT_DIR, f"no-rule-candidates-{stamp}.csv"),
+        report.write_rows_csv(os.path.join(config.run_dir(stamp), f"no-rule-candidates-{stamp}.csv"),
                               candidates, ["token", "count", "sample_title"])
         log(f"  no-rule candidates (heuristic, human review): {len(candidates)} tokens")
 
@@ -161,7 +161,7 @@ def forecast(rules_path, handle, cached=False, force=False, log=print):
 
     out = pass_forecast(load_products(config.CACHE_PRODUCTS_JSONL), cfg, handle, new_rules)
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
-    path = report.write_rows_csv(os.path.join(config.OUT_DIR, f"forecast-{handle}-{stamp}.csv"),
+    path = report.write_rows_csv(os.path.join(config.run_dir(stamp), f"forecast-{handle}-{stamp}.csv"),
                                  out["rows"], FORECAST_ROW_FIELDS)
     log(f"  wrote {path}  ({len(out['rows'])} rows)")
     log(f"  {out['new_rules']} new rules would fill {out['blanks_filled']} of {out['blanks']} current blanks")

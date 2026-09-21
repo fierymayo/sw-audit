@@ -41,6 +41,8 @@ python collections_audit.py            # collections health + automation candida
 python collections_audit.py --cached
 python ui.py                   # Tkinter front-end (same actions as buttons)
 python -m unittest discover tests
+python collections_audit.py --members       #also pull membership; compute Adds / Count After
+python collections_audit.py --members --deliverable   + merchant XLSX and PDF
 ```
 
 ## Keeping task-configs.json fresh
@@ -71,6 +73,7 @@ Every report prints the config file date; treat stale-dated runs with suspicion.
 | `collections-candidates-*.csv` | Manual collections classified AUTOMATABLE / REVIEW / KEEP_MANUAL with a suggested additive rule |
 | `audit-report-*.pdf` | Merchant-facing summary (`--pdf`, needs reportlab) |
 | `subcat-sim-*.csv` | Predicted vs actual SubCat tags (task-logic simulation): MISSING_SUBCAT / WILL_REPLACE / UNPREDICTED_EXISTING, with eligibility columns |
+| `Collections-to-Automate-*.xlsx` / `.pdf` | Merchant deliverable: Ready-to-Automate + Needs-Review sheets with Adds / Count After and Approve column |
 ## Reason codes (blanks CSVs)
 
 | Code | Meaning | Action |

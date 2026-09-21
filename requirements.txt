@@ -1,2 +1,3 @@
 python-dotenv
 reportlab   # only needed for --pdf
+openpyxl    # only needed for --deliverable XLSX

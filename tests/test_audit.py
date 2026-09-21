@@ -8,6 +8,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import collections_audit as ca
 import config
 import report
 from catalog import load_products
@@ -379,5 +380,139 @@ class TestSubcatPass(unittest.TestCase):
         pred = {r["handle"]: (r["predicted"], r["predicted_eligible"]) for r in out["rows"]}
         self.assertEqual(pred["s8"], ("SubCat_Accessory-Other", False))
         self.assertEqual(pred["s9"], ("SubCat_Sock-Tape", True))
+
+    
+
+
+def _c_p(n, title, ptype, **filters):
+    p = {"gid": f"gid://shopify/Product/{n}", "id": str(n), "handle": f"c{n}",
+         "title": title, "type": ptype, "status": "ACTIVE", "tags": [], "_tags_lc": [],
+         "club_filter": "", "country_filter": "", "player_filter": "", "tournament_filter": ""}
+    p.update(filters)
+    return p
+
+
+def _coll(n, title, count, has_rule=False):
+    return {"gid": f"gid://shopify/Collection/{n}", "id": str(n), "title": title,
+            "handle": f"col{n}", "count": count, "sources_n": 1 if has_rule else 0,
+            "conditions": [], "has_rule": has_rule}
+
+
+class TestCandidateEngine(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cfg = _sim_cfg()
+        active = ([_c_p(i, f"Poster {i}", "Posters") for i in range(1, 9)]
+                  + [_c_p(20, "Real Madrid Home Jersey", "Jerseys", club_filter="Real Madrid"),
+                     _c_p(21, "Real Madrid Away Jersey", "Jerseys", club_filter="Real Madrid"),
+                     _c_p(22, "Real Madrid Beanie", "Hats", club_filter="Real Madrid"),
+                     _c_p(23, "Blue Predator Cleats", "Footwear"),
+                     _c_p(24, "White Mercurial Cleats", "Footwear")])
+        cls.ctx = {"active": active,
+                   "type_counts": {"Posters": 8, "Jerseys": 2, "Hats": 1, "Footwear": 2}}
+
+    def classify_one(self, title, count=10, members=None):
+        rows = ca.find_candidates([_coll(1, title, count)], self.cfg,
+                                  products_ctx=self.ctx, members=members)
+        return rows[0]
+
+    def test_review_triggers(self):
+        self.assertIn("PDP", self.classify_one("Jersey: Lionel Messi")["suggested_rule"])
+        self.assertEqual(self.classify_one("Custom Nameset Builder")["classification"], "REVIEW")
+        self.assertEqual(self.classify_one("Club Am\u00e9rica Jerseys")["classification"], "REVIEW")
+        self.assertEqual(self.classify_one("St. Pauli Gear")["classification"], "REVIEW")
+        self.assertEqual(self.classify_one("Deportivo de Cali")["classification"], "REVIEW")
+
+    def test_brand_only_review(self):
+        row = self.classify_one("adidas Collection")
+        self.assertEqual(row["classification"], "REVIEW")
+        self.assertIn("brand", row["suggested_rule"])
+
+    def test_colour_verify_tier(self):
+        row = self.classify_one("Blue Soccer Cleats")
+        self.assertEqual(row["classification"], "COLOUR_VERIFY")
+        self.assertEqual(row["rule_type"], "Title colour")
+        self.assertIn("'blue'", row["suggested_rule"])
+
+    def test_type_anchor_and_broad(self):
+        anchored = self.classify_one("Real Madrid Hats")
+        self.assertEqual(anchored["rule_type"], "Title + Type")
+        self.assertIn("Product type equals 'Hats'", anchored["suggested_rule"])
+        broad = self.classify_one("Real Madrid Jerseys & Gear")
+        self.assertEqual(broad["rule_type"], "Club (metafield)")
+        self.assertNotIn("Product type", broad["suggested_rule"])
+
+    def test_whole_type_threshold(self):
+        ok = self.classify_one("Posters", count=5)
+        self.assertEqual((ok["classification"], ok["rule_type"]), ("AUTOMATABLE", "Product type"))
+        small = self.classify_one("Posters", count=2)
+        self.assertEqual(small["classification"], "REVIEW")
+        self.assertIn("curated subset", small["suggested_rule"])
+
+    def test_keep_manual_and_ambiguous(self):
+        self.assertEqual(self.classify_one("World Cup 2026")["classification"], "KEEP_MANUAL")
+        self.assertEqual(self.classify_one("Santos Jerseys")["classification"], "REVIEW")
+
+    def test_adds_math(self):
+        members = {"gid://shopify/Collection/1": {"gid://shopify/Product/20"}}
+        row = self.classify_one("Real Madrid Jerseys & Gear", count=1, members=members)
+        self.assertEqual(row["adds"], 2)
+        self.assertEqual(row["count_after"], 3)
+
+    def test_members_loader(self):
+        import tempfile
+        lines = ['{"id": "gid://shopify/Collection/9"}',
+                 '{"id": "gid://shopify/Product/1", "__parentId": "gid://shopify/Collection/9"}',
+                 '{"id": "gid://shopify/Product/2", "__parentId": "gid://shopify/Collection/9"}']
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False,
+                                         encoding="utf-8") as fh:
+            fh.write("\n".join(lines))
+            path = fh.name
+        try:
+            members = ca.load_members(path)
+        finally:
+            os.unlink(path)
+        self.assertEqual(len(members["gid://shopify/Collection/9"]), 2)
+
+
+class TestDeliverable(unittest.TestCase):
+    def test_xlsx_and_split(self):
+        try:
+            import openpyxl
+        except ImportError:
+            raise unittest.SkipTest("openpyxl not installed")
+        import tempfile
+        import deliverable as dlv
+        rows = [
+            {"title": "Real Madrid Hats", "handle": "rm-hats", "count": 3,
+             "classification": "AUTOMATABLE", "rule_type": "Title + Type",
+             "suggested_rule": "x", "adds": 2, "count_after": 5,
+             "admin_url": "https://admin.shopify.com/store/s/collections/151515151515"},
+            {"title": "Blue Cleats", "handle": "bc", "count": 4,
+             "classification": "COLOUR_VERIFY", "rule_type": "Title colour",
+             "suggested_rule": "y", "adds": "", "count_after": "",
+             "admin_url": "https://admin.shopify.com/store/s/collections/2"},
+            {"title": "Weird", "handle": "w", "count": 1, "classification": "REVIEW",
+             "rule_type": "Review", "suggested_rule": "z", "adds": "", "count_after": "",
+             "admin_url": "https://admin.shopify.com/store/s/collections/3"},
+            {"title": "Sale", "handle": "sale", "count": 9, "classification": "KEEP_MANUAL",
+             "rule_type": "", "suggested_rule": "", "adds": "", "count_after": "",
+             "admin_url": "https://admin.shopify.com/store/s/collections/4"},
+        ]
+        with tempfile.TemporaryDirectory() as td:
+            import config as cfgmod
+            old = cfgmod.OUT_DIR
+            cfgmod.OUT_DIR = td
+            try:
+                path = dlv.build_xlsx(rows, "test", log=lambda *a: None)
+                wb = openpyxl.load_workbook(path)
+            finally:
+                cfgmod.OUT_DIR = old
+        self.assertEqual(wb.sheetnames, ["Ready to Automate", "Needs Review"])
+        ws = wb["Ready to Automate"]
+        self.assertEqual(ws.max_row, 3)
+        self.assertEqual(ws.cell(row=2, column=1).number_format, "@")
+        self.assertEqual(ws.cell(row=2, column=1).value, "151515151515")
+        self.assertEqual(wb["Needs Review"].max_row, 2)
 if __name__ == "__main__":
     unittest.main()

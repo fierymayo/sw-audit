@@ -9,7 +9,7 @@ from passes import BLANK_ROW_FIELDS, FILLED_ROW_FIELDS, blanks_reason_counts, bl
 
 
 def _stamped(name, stamp, ext):
-    return os.path.join(config.OUT_DIR, f"{name}-{stamp}.{ext}")
+    return os.path.join(config.run_dir(stamp), f"{name}-{stamp}.{ext}")
 
 
 def write_rows_csv(path, rows, fields):
@@ -46,7 +46,9 @@ def write_filled_csvs(stamp, filled_rows, log=print):
 
 
 def load_previous_summary():
-    files = sorted(glob.glob(os.path.join(config.OUT_DIR, "fill-rate-summary-*.json")))
+    files = sorted(glob.glob(os.path.join(config.OUT_DIR, "fill-rate-summary-*.json"))
+                   + glob.glob(os.path.join(config.OUT_DIR, "audit-*", "fill-rate-summary-*.json")),
+                   key=os.path.basename)
     if not files:
         return None, None
     with open(files[-1], encoding="utf-8") as fh:
