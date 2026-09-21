@@ -458,13 +458,22 @@ class TestCandidateEngine(unittest.TestCase):
         row = self.classify_one("Real Madrid Jerseys & Gear", count=1, members=members)
         self.assertEqual(row["adds"], 2)
         self.assertEqual(row["count_after"], 3)
-        
+
+
+    def test_whole_type_uses_member_overlap_when_available(self):
+        members = {"gid://shopify/Collection/1": {"gid://shopify/Product/23",
+                                                  "gid://shopify/Product/24"}}
+        row = self.classify_one("Posters", count=8, members=members)
+        self.assertEqual(row["classification"], "REVIEW")
+        self.assertIn("0 of 8", row["suggested_rule"])   
+
     def test_partial_entity_match_goes_to_review(self):
         row = self.classify_one("New England Revolution")
         self.assertEqual(row["classification"], "REVIEW")
         self.assertIn("unexplained words", row["suggested_rule"])
         clean = self.classify_one("San Jose Earthquakes")
         self.assertEqual(clean["classification"], "AUTOMATABLE")
+        
     def test_members_loader(self):
         import tempfile
         lines = ['{"id": "gid://shopify/Collection/9"}',

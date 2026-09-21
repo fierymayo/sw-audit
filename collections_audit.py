@@ -241,7 +241,7 @@ def _review(c, detail):
     return ("REVIEW", "Review", "", detail)
 
 
-def _classify_candidate(c, cfg, products_ctx):
+def _classify_candidate(c, cfg, products_ctx, members=None):
     title = c["title"]
     title_l = title.lower()
     core, broad = _strip_suffix(title)
@@ -314,14 +314,18 @@ def _classify_candidate(c, cfg, products_ctx):
             (t for t in products_ctx["type_counts"] if normalize(t) == core_norm), None)
         if whole:
             total = products_ctx["type_counts"].get(whole, 0)
-            if total and c["count"] >= 0.5 * total:
+            covered = c["count"]
+            if members is not None:
+                type_gids = {p["gid"] for p in products_ctx["active"] if p["type"] == whole}
+                covered = len(members.get(c["gid"], set()) & type_gids)
+            if total and covered >= 0.5 * total:
                 rule = {"kind": "whole_type", "type": whole}
                 return ("AUTOMATABLE", "Product type",
                         f"Product type equals '{whole}' (collection holds {c['count']}; "
                         f"store has {total} active {whole} products)", ""), rule
             if total:
-                return _review(c, f"type-named but only {c['count']} of {total} active "
-                                  f"{whole} products \u2014 curated subset"), None
+                return _review(c, f"type-named but only {covered} of {total} active "
+                                  f"{whole} products are members \u2014 curated subset"), None
     return _review(c, "no decomposition \u2014 likely thematic/custom"), None
 
 
@@ -342,7 +346,7 @@ def find_candidates(collections, cfg, products_ctx=None, members=None):
     for c in collections:
         if c["has_rule"] or c["count"] == 0:
             continue
-        (classification, rule_type, suggested, detail), rule = _classify_candidate(c, cfg, products_ctx)
+        (classification, rule_type, suggested, detail), rule = _classify_candidate(c, cfg, products_ctx, members)
         adds = count_after = ""
         if rule and products_ctx and members is not None:
             member_ids = members.get(c["gid"], set())
