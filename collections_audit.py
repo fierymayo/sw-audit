@@ -192,6 +192,22 @@ def load_products_ctx(log=print):
     return {"active": active, "type_counts": dict(by_type)}
 
 
+def _warn_cache_drift(log, paths=None, max_hours=6):
+    paths = paths or [config.CACHE_PRODUCTS_JSONL, config.CACHE_COLLECTIONS_JSONL,
+                      config.CACHE_COLLECTIONS_MEMBERS]
+    stamps = [(os.path.basename(p), os.path.getmtime(p)) for p in paths if os.path.exists(p)]
+    if len(stamps) < 2:
+        return False
+    times = [s for _, s in stamps]
+    hours = (max(times) - min(times)) / 3600
+    if hours <= max_hours:
+        return False
+    names = ", ".join(f"{n} ({datetime.datetime.fromtimestamp(s):%m-%d %H:%M})" for n, s in stamps)
+    log(f"  WARNING: caches are {hours:.1f}h apart ({names}) — Adds/Count After span "
+        "drifted data; refresh products and collections the same morning for merchant numbers.")
+    return True
+
+
 def health_check(collections, baseline, cfg):
     vocab = set()
     for _, handle in FILTER_HANDLES:
@@ -393,6 +409,8 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, l
             log("  members cache missing — Adds/Count After stay blank "
                 "(run with --members, without --cached, to pull it).")
     products_ctx = load_products_ctx(log=log)
+    if members is not None:
+        _warn_cache_drift(log)
 
     stamp = config.now().strftime("%Y%m%d-%H%M")
     health = health_check(collections, baseline, cfg)
@@ -415,6 +433,12 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, l
         dlv.build_xlsx(candidates, stamp, log=log)
         dlv.build_pdf(candidates, stamp, log=log)
 
+    alerts = {}
+    for r in health:
+        if r["finding"] in ("RULE_LOST", "COUNT_DROP"):
+            alerts[r["finding"]] = alerts.get(r["finding"], 0) + 1
+    log("  HEALTH: " + ("ATTENTION — " + "  ".join(f"{k}={v}" for k, v in sorted(alerts.items()))
+                        if alerts else "OK"))
     if not cached or not baseline:
         save_baseline(collections, log=log)
     else:

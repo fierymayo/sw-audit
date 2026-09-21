@@ -594,5 +594,25 @@ class TestSurnameBuckets(unittest.TestCase):
         self.assertEqual(none_row["preceding_words"], "")
 
 
+class TestCacheDrift(unittest.TestCase):
+    def test_warns_only_past_threshold(self):
+        import tempfile
+        import time as time_mod
+        logs = []
+        with tempfile.TemporaryDirectory() as td:
+            a, b = os.path.join(td, "a.jsonl"), os.path.join(td, "b.jsonl")
+            for p in (a, b):
+                open(p, "w").close()
+            now = time_mod.time()
+            os.utime(a, (now - 8 * 3600, now - 8 * 3600))
+            os.utime(b, (now, now))
+            self.assertTrue(ca._warn_cache_drift(logs.append, paths=[a, b]))
+            self.assertIn("8.0h apart", logs[0])
+            os.utime(a, (now - 3600, now - 3600))
+            self.assertFalse(ca._warn_cache_drift(logs.append, paths=[a, b]))
+            self.assertFalse(ca._warn_cache_drift(logs.append, paths=[a]))
+            self.assertEqual(len(logs), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

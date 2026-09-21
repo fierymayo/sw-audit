@@ -145,6 +145,18 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
                               buckets, SURNAME_BUCKET_FIELDS)
         log(f"  surname buckets: {len(set(r['surname'] for r in buckets))} surnames, {len(buckets)} context rows")
 
+    attention = []
+    sync_miss = sum(1 for rows in blanks.values() for r in rows if r["reason"] == "SYNC_MISS")
+    if sync_miss:
+        attention.append(f"SYNC_MISS={sync_miss}")
+    invalid = sum(1 for rows in blanks.values() for r in rows if r["reason"] == "INVALID_CHOICE")
+    if invalid:
+        attention.append(f"INVALID_CHOICE={invalid}")
+    if coverage and coverage["missing_tag"]:
+        attention.append(f"addon_missing={len(coverage['missing_tag'])}")
+    if errors:
+        attention.append(f"lint_errors={len(errors)}")
+    log("  HEALTH: " + ("ATTENTION — " + "  ".join(attention) if attention else "OK"))
     report.write_lint(stamp, findings, log=log)
     if pdf:
         report.build_pdf(stamp, summary, blanks, coverage, vendors, findings, log=log)
