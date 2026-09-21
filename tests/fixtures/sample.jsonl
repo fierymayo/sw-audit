@@ -17,3 +17,7 @@
 {"key": "product_age", "value": "New", "__parentId": "gid://shopify/Product/12"}
 {"key": "sibling_products", "value": "gid1,gid2", "__parentId": "gid://shopify/Product/12"}
 {"id": "gid://shopify/Product/13", "handle": "p13", "title": "Plain Training Top", "vendor": "soccerwearhouse.com", "productType": "Misc", "tags": ["group_x"], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"id": "gid://shopify/Product/14", "handle": "p14", "title": "FC Barcelona Home Jersey", "vendor": "Nike", "productType": "Jerseys", "tags": ["group_lonely"], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"key": "club_filter", "value": "Inter Miami CF", "__parentId": "gid://shopify/Product/14"}
+{"id": "gid://shopify/Product/15", "handle": "p15", "title": "Plain Training Top Long Sleeve", "vendor": "Nike", "productType": "Jerseys", "tags": ["group_x", "group_solo"], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"key": "sibling_products", "value": "gid3", "__parentId": "gid://shopify/Product/15"}

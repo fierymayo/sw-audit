@@ -4,13 +4,16 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import config
+import report
 from catalog import load_products
 from matcher import compile_rules, match_title, normalize, strip_fc
-from passes import (pass_addon_coverage, pass_fill_rates, pass_filter_blanks,
-                    pass_vendor_audit)
+from passes import (pass_addon_coverage, pass_filled_check, pass_fill_rates, pass_filter_blanks,
+                    pass_forecast, pass_vendor_audit)
 from rules import config_lint, load_task_rules
 
 FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
@@ -107,16 +110,21 @@ class TestOtherPasses(unittest.TestCase):
 
     def test_fill_rates_and_diff(self):
         s = pass_fill_rates(self.products, self.cfg)
-        self.assertEqual(s["active"], 12)
-        self.assertEqual(s["fill_club_filter"]["filled"], 2)
-        self.assertEqual(s["fill_sibling_products"]["filled"], 1)
-        self.assertEqual(s["sibling_scope"]["products_with_group_tag"], 1)
-        self.assertEqual(s["sibling_scope"]["filled_within_group_scope"], 0)
+        self.assertEqual(s["active"], 14)
+        self.assertEqual(s["fill_club_filter"]["filled"], 3)
+        self.assertEqual(s["fill_sibling_products"]["filled"], 2)
         self.assertEqual(s["type_misc_active"], 1)
-        prev = dict(s, fill_club_filter={"filled": 1, "pct": 8.3}, active=11)
+        prev = dict(s, fill_club_filter={"filled": 2, "pct": 8.3}, active=13)
         s2 = pass_fill_rates(self.products, self.cfg, prev=prev, prev_name="prev.json")
         self.assertEqual(s2["delta_vs_previous"]["fill_club_filter"]["filled"], 1)
         self.assertEqual(s2["delta_vs_previous"]["active"], 1)
+
+    def test_sibling_precision_counts_multi_member_groups_only(self):
+        # group_x has p13 (blank) + p15 (filled); group_solo and group_lonely have one member each
+        scope = pass_fill_rates(self.products, self.cfg)["sibling_scope"]
+        self.assertEqual(scope, {"products_with_group_tag": 3, "multi_member_groups": 1,
+                                 "products_in_multi_member_groups": 2,
+                                 "filled_in_multi_member_groups": 1})
 
     def test_addon_coverage(self):
         cov = pass_addon_coverage(self.products, self.cfg)
@@ -137,6 +145,98 @@ class TestOtherPasses(unittest.TestCase):
         findings = config_lint(self.cfg)
         errors = [f for f in findings if f["level"] == "ERROR"]
         self.assertTrue(any("Leon FC" in f["message"] for f in errors))
+
+
+class TestFilledCheck(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cfg, cls.products = load_fixture_state()
+        cls.result = pass_filled_check(cls.products, cls.cfg)
+        cls.club = {r["handle"]: r for r in cls.result["rows"]["club_filter"]}
+
+    def test_orphan_rows_and_counts(self):
+        row = self.club["p12"]
+        self.assertEqual((row["finding"], row["stored_value"], row["predicted_value"]),
+                         ("FILLED_ORPHAN", "Tigres UANL", ""))
+        self.assertEqual(self.result["orphans"]["club_filter"], {"Tigres UANL": 1})
+        self.assertEqual(self.result["orphans"]["country_filter"], {"Wales": 1})
+        self.assertEqual(self.result["orphans"]["player_filter"], {})
+
+    def test_divergent(self):
+        row = self.club["p14"]
+        self.assertEqual((row["finding"], row["stored_value"], row["predicted_value"]),
+                         ("FILLED_DIVERGENT", "Inter Miami CF", "FC Barcelona"))
+
+    def test_agreeing_and_unpredicted_values_are_not_flagged(self):
+        self.assertNotIn("p1", self.club)
+        self.assertEqual(self.result["rows"]["player_filter"], [])
+
+    def test_skipped_in_fallback_mode(self):
+        self.assertIsNone(pass_filled_check(self.products, None))
+
+
+class TestForecast(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cfg, cls.products = load_fixture_state()
+
+    def forecast(self, rules):
+        return pass_forecast(self.products, self.cfg, "player", rules)
+
+    def test_delta_rule_fills_known_blank(self):
+        out = self.forecast([{"canonical_value": "Jordan Davies", "safe_keywords": ["jordan davies"]}])
+        row = out["rows"][0]
+        self.assertEqual((row["canonical"], row["keyword_count"], row["blanks_filled"], row["flags"]),
+                         ("Jordan Davies", 1, 1, ""))
+        self.assertEqual(row["sample_title"], "Jordan Davies Wales Tee")
+        self.assertEqual((out["new_rules"], out["blanks_filled"], out["blanks"]), (1, 1, 13))
+
+    def test_existing_longer_keyword_still_steals(self):
+        # "home" also hits p1, but existing "messi" is longer and wins there
+        out = self.forecast([{"canonical_value": "Home Guy", "safe_keywords": ["home"]}])
+        self.assertEqual(out["rows"][0]["blanks_filled"], 2)
+
+    def test_collision_with_existing_keyword_is_flagged_and_ambiguous(self):
+        out = self.forecast([{"canonical_value": "Lionel", "safe_keywords": ["messi"]}])
+        row = out["rows"][0]
+        self.assertIn("COLLISION_EXISTING(messi -> Messi)", row["flags"])
+        self.assertEqual(row["blanks_filled"], 0)
+
+    def test_duplicate_within_delta_is_flagged(self):
+        out = self.forecast([{"canonical_value": "A1", "safe_keywords": ["zed"]},
+                             {"canonical_value": "B1", "safe_keywords": ["zed"]}])
+        flags = {r["canonical"]: r["flags"] for r in out["rows"]}
+        self.assertEqual(flags["A1"], "DUPLICATE_IN_DELTA(zed also in B1)")
+        self.assertEqual(flags["B1"], "DUPLICATE_IN_DELTA(zed also in A1)")
+
+    def test_needs_live_rules(self):
+        self.assertIsNone(pass_forecast(self.products, None, "player", [{"canonical_value": "X"}]))
+
+
+class TestSnapshot(unittest.TestCase):
+    def test_writes_md_with_deltas_only_when_previous_exists(self):
+        cfg, products = load_fixture_state()
+        summary = pass_fill_rates(products, cfg)
+        summary["filled_orphans"] = pass_filled_check(products, cfg)["orphans"]
+        prev = dict(summary, active=13, fill_club_filter={"filled": 2, "pct": 8.3})
+        with tempfile.TemporaryDirectory() as td, mock.patch.object(config, "OUT_DIR", td):
+            cache = os.path.join(td, "products.jsonl")
+            open(cache, "w").close()
+            path = report.write_snapshot_md(summary, None, cache, log=lambda *_: None)
+            self.assertEqual(os.path.basename(path), f"catalog-snapshot-{summary['generated_at'][:10]}.md")
+            with open(path, encoding="utf-8") as fh:
+                first = fh.read()
+            self.assertIn("| Active products | 14 |  |", first)
+            self.assertIn("- club_filter: Tigres UANL ×1", first)
+            self.assertIn("Sibling precision: 1 of 2 products in multi-member groups filled (50.0%)", first)
+            self.assertIn(f"rules file {summary['rules_file_date']}", first)
+            self.assertIn("cache products.jsonl", first)
+
+            report.write_snapshot_md(summary, prev, cache, log=lambda *_: None)
+            with open(path, encoding="utf-8") as fh:
+                second = fh.read()
+            self.assertIn("| Active products | 14 | +1 |", second)
+            self.assertIn("| club_filter | 3 | ", second)
 
 
 class TestRulesFileDate(unittest.TestCase):

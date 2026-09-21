@@ -36,6 +36,7 @@ python audit.py --cached       # re-scan last download, no network
 python audit.py --pdf          # also emit the merchant-facing PDF
 python audit.py --lint         # task-config lint only
 python audit.py --force        # cancel an in-flight bulk query op and restart
+python audit.py --forecast NEW-rules.json --filter player [--cached]   # rule-delta forecast, no other passes
 python collections_audit.py            # collections health + automation candidates
 python collections_audit.py --cached
 python ui.py                   # Tkinter front-end (same actions as buttons)
@@ -57,7 +58,10 @@ Every report prints the config file date; treat stale-dated runs with suspicion.
 | File | What it is |
 |---|---|
 | `blanks-<filter>-*.csv` | Active products blank on that filter, with a reason code, matched value, and admin/storefront links |
-| `fill-rate-summary-*.json` | Job 1 snapshot (fill %, types, SubCat/addon counts) + delta vs the previous summary |
+| `fill-rate-summary-*.json` | Job 1 snapshot (fill %, types, SubCat/addon counts, `sibling_scope` multi-member-group precision, `filled_orphans` per filter) + delta vs the previous summary |
+| `catalog-snapshot-<date>.md` | Terse, diffable markdown of the summary with a delta column vs the previous run (blank on a first run) and a provenance footer; one file per day, overwritten by same-day reruns |
+| `filled-check-<filter>-*.csv` | Filled values cross-checked against the task matcher: FILLED_ORPHAN / FILLED_DIVERGENT (info only, see below) |
+| `forecast-<filter>-*.csv` | `--forecast` only: per new canonical, keyword count, blanks it would fill, collision flags, sample title |
 | `addon-missing-tag-*.csv` | Eligible-SubCat products missing `addon-eligible` (should be empty) |
 | `addon-stale-tag-*.csv` | `addon-eligible` present but SubCat not in the 29-list (persists by design; review only) |
 | `vendor-audit-*.csv` | NOT_NORMALIZED / CASING_ALIAS_CANDIDATE / NEW_VENDOR_CANDIDATE vendor findings |
@@ -80,3 +84,25 @@ Every report prints the config file date; treat stale-dated runs with suspicion.
 | CANDIDATE | Fallback mode only (no task-configs.json) | Generate the config |
 
 `SYNC_LAG` window is tunable: `--lag-hours` or `SYNC_LAG_HOURS` in `.env`.
+
+## Filled-check findings (filled-check CSVs)
+
+Active products where the filter is already filled, run through the same task matcher. Informational only — never a to-fix list for the tasks. Skipped in fallback mode.
+
+| Finding | Meaning | Action |
+|---|---|---|
+| FILLED_ORPHAN | Stored value is not any rule canonical for that filter (per-value counts also land in the summary JSON under `filled_orphans`). One row per product; `predicted_value` shows what the matcher would say, if anything | Decide: add a rule, or leave the manual value |
+| FILLED_DIVERGENT | Stored value is a valid canonical, but the matcher predicts a different one. Tasks are `add_only` and will never change a filled value | Info only |
+
+No finding when the matcher predicts nothing or agrees.
+
+## Rule-delta forecast
+
+`python audit.py --forecast NEW-rules.json --filter player` takes a JSON list shaped like `keyword_rules` (`[{"canonical_value", "safe_keywords"}]`) and reports how many current active blanks it would fill. New and existing rules are matched together (longest wins), so an existing longer keyword still steals a match, exactly as the task would. Counts assume the new canonicals are also added to the task's `allowed_values`. Keywords are collision-linted first; flagged rules are still counted:
+
+| Flag | Meaning |
+|---|---|
+| COLLISION_EXISTING(kw -> canonical) | Normalizes identical to an existing keyword of a different canonical — permanently ambiguous |
+| DUPLICATE_IN_DELTA(kw …) | Same normalized keyword appears more than once in the delta |
+
+It uses the cached catalog and touches the network only if the cache is missing (and `--cached` is not given).

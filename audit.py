@@ -9,24 +9,35 @@ Never writes to the store. Deltas are applied by a human via the Mechanic tasks.
   python audit.py --lint     task-config lint only (no catalog needed)
   python audit.py --pdf      also emit the merchant-facing PDF
   python audit.py --force    cancel an in-flight bulk query op and restart
+  python audit.py --forecast NEW-rules.json --filter player [--cached]
+                             how many current blanks a delta rule set would fill (no other passes)
 """
 import argparse
 import datetime
+import json
 import os
 import sys
+from collections import Counter
 
 import config
 import report
 from catalog import FILTERS, PRODUCTS_BULK_QUERY, load_products
-from passes import (blanks_reason_counts, pass_addon_coverage, pass_filter_blanks,
-                    pass_fill_rates, pass_no_rule_candidates, pass_vendor_audit)
-from rules import config_lint, load_task_rules
+from passes import (FORECAST_ROW_FIELDS, blanks_reason_counts, pass_addon_coverage,
+                    pass_filled_check, pass_filter_blanks, pass_fill_rates, pass_forecast,
+                    pass_no_rule_candidates, pass_vendor_audit)
+from rules import FILTER_HANDLES, config_lint, load_task_rules
 from shopify_client import ShopifyBulk, get_admin_token
 
 
 def _log_lint(findings, log):
     for f in findings:
         log(f"  [{f['level']}] {f['area']}: {f['message']}")
+
+
+def _fetch_products(force, log):
+    client = ShopifyBulk(config.SHOP_DOMAIN, get_admin_token(log), config.API_VERSION)
+    log("Kicking off products bulk operation...")
+    client.run_to_file(PRODUCTS_BULK_QUERY, config.CACHE_PRODUCTS_JSONL, force=force, log=log)
 
 
 def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=None, log=print):
@@ -45,9 +56,7 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         log(f"Config lint: {len(errors)} ERROR finding(s) — details in config-lint CSV.")
 
     if not cached:
-        client = ShopifyBulk(config.SHOP_DOMAIN, get_admin_token(log), config.API_VERSION)
-        log("Kicking off products bulk operation...")
-        client.run_to_file(PRODUCTS_BULK_QUERY, config.CACHE_PRODUCTS_JSONL, force=force, log=log)
+        _fetch_products(force, log)
 
     if not os.path.exists(config.CACHE_PRODUCTS_JSONL):
         sys.exit(f"No cached JSONL at {config.CACHE_PRODUCTS_JSONL}. Run without --cached first.")
@@ -65,9 +74,20 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         if counts:
             log(f"  {filter_key}: " + "  ".join(f"{r}={n}" for r, n in sorted(counts.items())))
 
+    filled = pass_filled_check(products, cfg)
+    if filled:
+        report.write_filled_csvs(stamp, filled["rows"], log=log)
+        for filter_key, rows in filled["rows"].items():
+            if rows:
+                counts = Counter(r["finding"] for r in rows)
+                log(f"  {filter_key} filled-check: " + "  ".join(f"{f}={n}" for f, n in sorted(counts.items())))
+
     prev, prev_name = report.load_previous_summary()
     summary = pass_fill_rates(products, cfg, prev=prev, prev_name=prev_name)
+    if filled:
+        summary["filled_orphans"] = filled["orphans"]
     report.write_summary(stamp, summary, log=log)
+    report.write_snapshot_md(summary, prev, config.CACHE_PRODUCTS_JSONL, log=log)
     log(f"  active={summary['active']:,}  "
         + "  ".join(f"{f.split('_')[0]}={summary[f'fill_{f}']['pct']}%" for f in FILTERS))
     if prev:
@@ -108,6 +128,38 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
     log("Done.")
 
 
+def forecast(rules_path, handle, cached=False, force=False, log=print):
+    cfg = load_task_rules(config.TASK_CONFIGS)
+    if not cfg or not (cfg.get(handle) or {}).get("_compiled"):
+        sys.exit(f"Forecast needs the live '{handle}' rules in {config.TASK_CONFIGS} "
+                 f"(run make_task_configs.py).")
+    try:
+        with open(rules_path, encoding="utf-8") as fh:
+            new_rules = json.load(fh)
+    except (OSError, ValueError) as e:
+        sys.exit(f"Cannot read {rules_path}: {e}")
+    if not (isinstance(new_rules, list) and new_rules and all(isinstance(r, dict) for r in new_rules)):
+        sys.exit(f"{rules_path} must be a non-empty JSON list of "
+                 f'{{"canonical_value", "safe_keywords"}} rules.')
+
+    if not os.path.exists(config.CACHE_PRODUCTS_JSONL):
+        if cached:
+            sys.exit(f"No cached JSONL at {config.CACHE_PRODUCTS_JSONL}. Run without --cached first.")
+        _fetch_products(force, log)
+    cache_date = datetime.date.fromtimestamp(os.path.getmtime(config.CACHE_PRODUCTS_JSONL)).isoformat()
+    log(f"Rules dated {cfg['_meta']['file_date']}, catalog cache dated {cache_date}.")
+
+    out = pass_forecast(load_products(config.CACHE_PRODUCTS_JSONL), cfg, handle, new_rules)
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    path = report.write_rows_csv(os.path.join(config.OUT_DIR, f"forecast-{handle}-{stamp}.csv"),
+                                 out["rows"], FORECAST_ROW_FIELDS)
+    log(f"  wrote {path}  ({len(out['rows'])} rows)")
+    log(f"  {out['new_rules']} new rules would fill {out['blanks_filled']} of {out['blanks']} current blanks")
+    flagged = sum(1 for r in out["rows"] if r["flags"])
+    if flagged:
+        log(f"  {flagged} rule(s) flagged; see the flags column.")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--cached", action="store_true", help="scan the last downloaded JSONL, skip fetch")
@@ -115,7 +167,18 @@ def main():
     ap.add_argument("--pdf", action="store_true", help="also emit the merchant-facing PDF")
     ap.add_argument("--lint", action="store_true", help="task-config lint only")
     ap.add_argument("--lag-hours", type=int, default=None, help="SYNC_LAG window (default 48)")
+    ap.add_argument("--forecast", metavar="NEW-RULES.json",
+                    help="forecast how many current blanks a delta rule set would fill (no other passes)")
+    ap.add_argument("--filter", choices=[h for _, h in FILTER_HANDLES], help="filter for --forecast")
     args = ap.parse_args()
+    if args.forecast:
+        if not args.filter:
+            ap.error("--forecast requires --filter")
+        if args.lint or args.pdf:
+            ap.error("--forecast runs no other passes; drop --lint/--pdf")
+        return forecast(args.forecast, args.filter, cached=args.cached, force=args.force)
+    if args.filter:
+        ap.error("--filter is only used with --forecast")
     pipeline(cached=args.cached, force=args.force, pdf=args.pdf,
              lint_only=args.lint, lag_hours=args.lag_hours)
 

@@ -1,10 +1,11 @@
 import csv
+import datetime
 import glob
 import json
 import os
 
 import config
-from passes import BLANK_ROW_FIELDS, blanks_reason_counts, blanks_top_values
+from passes import BLANK_ROW_FIELDS, FILLED_ROW_FIELDS, blanks_reason_counts, blanks_top_values
 
 
 def _stamped(name, stamp, ext):
@@ -32,6 +33,18 @@ def write_blank_csvs(stamp, blanks, log=print):
     return paths
 
 
+def write_filled_csvs(stamp, filled_rows, log=print):
+    paths = []
+    for filter_key, rows in filled_rows.items():
+        if not rows:
+            continue
+        path = _stamped(f"filled-check-{filter_key}", stamp, "csv")
+        write_rows_csv(path, rows, FILLED_ROW_FIELDS)
+        log(f"  wrote {path}  ({len(rows)} rows)")
+        paths.append(path)
+    return paths
+
+
 def load_previous_summary():
     files = sorted(glob.glob(os.path.join(config.OUT_DIR, "fill-rate-summary-*.json")))
     if not files:
@@ -45,6 +58,93 @@ def write_summary(stamp, summary, log=print):
     path = _stamped("fill-rate-summary", stamp, "json")
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(summary, fh, indent=2, ensure_ascii=False)
+    log(f"  wrote {path}")
+    return path
+
+
+def write_snapshot_md(summary, prev, cache_path, log=print):
+    """Doc-chain artifact, derived only from the summary (+ previous summary for
+    deltas). Delta cells are blank on a first run."""
+    def sgn(n):
+        return f"{n:+,}" if n else "0"
+
+    def d_num(key):
+        if not prev or not isinstance(prev.get(key), (int, float)):
+            return ""
+        return sgn(summary[key] - prev[key])
+
+    def d_fill(key):
+        p = (prev or {}).get(key)
+        if not (isinstance(p, dict) and "filled" in p):
+            return ""
+        df, dp = summary[key]["filled"] - p["filled"], round(summary[key]["pct"] - p["pct"], 1)
+        return f"{df:+,} ({dp:+.1f}pp)" if df or dp else "0"
+
+    lines = [f"# Catalog snapshot — {summary['generated_at'][:10]}", ""]
+
+    def table(header, rows):
+        lines.append("| " + " | ".join(header) + " |")
+        lines.append("|" + "---|" * len(header))
+        lines.extend("| " + " | ".join(str(c) for c in r) + " |" for r in rows)
+        lines.append("")
+
+    lines += ["## Overview", ""]
+    table(["Metric", "Value", "Δ vs previous"],
+          [["Total products", f"{summary['total']:,}", d_num("total")],
+           ["Active products", f"{summary['active']:,}", d_num("active")]])
+
+    lines += ["## Fill rates (active)", ""]
+    table(["Field", "Filled", "%", "Δ vs previous"],
+          [[k[5:], f"{summary[k]['filled']:,}", f"{summary[k]['pct']}%", d_fill(k)]
+           for k in summary if k.startswith("fill_")])
+    sc = summary["sibling_scope"]
+    in_multi = sc["products_in_multi_member_groups"]
+    pct = round(100 * sc["filled_in_multi_member_groups"] / in_multi, 1) if in_multi else 0
+    lines += [f"Sibling precision: {sc['filled_in_multi_member_groups']:,} of {in_multi:,} products in "
+              f"multi-member groups filled ({pct}%) · {sc['multi_member_groups']:,} multi-member groups · "
+              f"{sc['products_with_group_tag']:,} products carry a group_ tag", ""]
+
+    lines += ["## Type distribution (active)", ""]
+    prev_types = {t: n for t, n in (prev or {}).get("type_top12") or []}
+    rows = [[t or "(blank)", f"{n:,}", sgn(n - prev_types[t]) if t in prev_types else ""]
+            for t, n in summary["type_top12"]]
+    rows.append(["(blank type)", f"{summary['blank_type_active']:,}", d_num("blank_type_active")])
+    for k in sorted(k for k in summary if k.startswith("type_") and k.endswith("_active")):
+        rows.append([f"({k[5:-7]})", f"{summary[k]:,}", d_num(k)])
+    table(["Type", "Active", "Δ vs previous"], rows)
+
+    lines += ["## SubCat / add-on", ""]
+    table(["Metric", "Active", "Δ vs previous"],
+          [["SubCat-tagged", f"{summary['subcat_tagged_active']:,}", d_num("subcat_tagged_active")],
+           ["addon-eligible", f"{summary['addon_eligible_active']:,}", d_num("addon_eligible_active")]])
+
+    lines += ["## Filled orphans", ""]
+    orphans = summary.get("filled_orphans")
+    if orphans is None:
+        lines += ["n/a — no task rules loaded (fallback mode).", ""]
+    else:
+        prev_orphans = (prev or {}).get("filled_orphans") or {}
+        rows = []
+        for filter_key, counts in orphans.items():
+            total = sum(counts.values())
+            delta = sgn(total - sum(prev_orphans[filter_key].values())) if filter_key in prev_orphans else ""
+            rows.append([filter_key, f"{len(counts):,}", f"{total:,}", delta])
+        table(["Filter", "Orphan values", "Products", "Δ vs previous"], rows)
+        for filter_key, counts in orphans.items():
+            if counts:
+                top = " · ".join(f"{v} ×{n}" for v, n in list(counts.items())[:10])
+                lines.append(f"- {filter_key}: {top}")
+        lines.append("")
+
+    cache_mtime = (datetime.datetime.fromtimestamp(os.path.getmtime(cache_path)).isoformat(timespec="seconds")
+                   if os.path.exists(cache_path) else "missing")
+    lines.append(f"Generated {summary['generated_at']} · rules file {summary.get('rules_file_date', 'NONE')} "
+                 f"· cache {os.path.basename(cache_path)} ({cache_mtime})")
+
+    os.makedirs(config.OUT_DIR, exist_ok=True)
+    path = os.path.join(config.OUT_DIR, f"catalog-snapshot-{summary['generated_at'][:10]}.md")
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("\n".join(lines) + "\n")
     log(f"  wrote {path}")
     return path
 

@@ -4,7 +4,7 @@ from collections import Counter, defaultdict
 
 import config
 from catalog import FILTERS
-from matcher import match_title, normalize, phrase_in, strip_fc
+from matcher import compile_rules, match_title, normalize, phrase_in, strip_fc
 from rules import FILTER_HANDLES
 
 # Reason codes (facts, not prose):
@@ -15,6 +15,10 @@ from rules import FILTER_HANDLES
 #   KEYWORD_GAP     a rostered canonical value appears in the title, but no safe_keyword matches this phrasing
 #   NO_RULE_VALUE   a catalog vocab value appears in the title but no rule produces it (manual edits / removed rule)
 #   CANDIDATE       fallback mode only (no task-configs.json): catalog-derived phrase hit
+# Filled-check findings (filled values only; informational, never a to-fix list for the tasks):
+#   FILLED_ORPHAN     stored value is not any rule canonical for that filter (rules/catalog drift)
+#   FILLED_DIVERGENT  matcher predicts a different canonical than stored; info only — tasks are
+#                     add_only and will never change a filled value
 
 FALLBACK_GUARDS = {"williams", "lyon", "sunderland", "porto", "henry", "morgan",
                    "santos", "juarez", "araujo", "gordon"}
@@ -22,6 +26,9 @@ FALLBACK_MIN_LEN = 4
 
 BLANK_ROW_FIELDS = ["handle", "title", "filter", "reason", "matched_value",
                     "created_at", "admin_url", "storefront_url"]
+FILLED_ROW_FIELDS = ["handle", "title", "filter", "finding", "stored_value", "predicted_value",
+                     "admin_url", "storefront_url"]
+FORECAST_ROW_FIELDS = ["canonical", "keyword_count", "blanks_filled", "flags", "sample_title"]
 
 ALWAYS_SUBCAT_TYPES = {"Air Freshener", "Enamel Pin", "Scarves", "Mini Figures", "Posters",
                        "Water Bottles", "Shin Guards", "Field Player Gloves", "Goalkeeper Gloves",
@@ -117,6 +124,93 @@ def blanks_top_values(blanks, top=12):
     return out
 
 
+def pass_filled_check(products, cfg):
+    """Filled-value cross-check. None in fallback mode (no rules). One row per
+    product/filter; an orphan that also has a prediction stays FILLED_ORPHAN."""
+    active = _active(products)
+    rows_by_filter, orphans = {}, {}
+    for filter_key, handle in FILTER_HANDLES:
+        entry = (cfg or {}).get(handle)
+        compiled = entry.get("_compiled") if entry else None
+        if not compiled:
+            continue
+        canonicals = entry["_canonicals"]
+        rows, counts = [], Counter()
+        for p in active:
+            stored = p[filter_key]
+            if not stored:
+                continue
+            predicted, _ambiguous = match_title(p["title"], compiled)
+            if stored not in canonicals:
+                finding = "FILLED_ORPHAN"
+                counts[stored] += 1
+            elif predicted and predicted != stored:
+                finding = "FILLED_DIVERGENT"
+            else:
+                continue
+            rows.append({
+                "handle": p["handle"], "title": p["title"], "filter": filter_key,
+                "finding": finding, "stored_value": stored, "predicted_value": predicted or "",
+                "admin_url": config.admin_product_url(p["id"]),
+                "storefront_url": config.storefront_product_url(p["handle"]),
+            })
+        rows_by_filter[filter_key] = rows
+        orphans[filter_key] = dict(counts.most_common())
+    if not rows_by_filter:
+        return None
+    return {"rows": rows_by_filter, "orphans": orphans}
+
+
+def pass_forecast(products, cfg, handle, new_rules):
+    """Blanks a delta rule set would fill, matched against existing + new rules
+    together (longest wins, so an existing longer keyword still steals). None if
+    the live rules for `handle` are not loaded."""
+    entry = (cfg or {}).get(handle)
+    existing = entry.get("_compiled") if entry else None
+    if not existing:
+        return None
+    filter_key = next(k for k, h in FILTER_HANDLES if h == handle)
+    delta = compile_rules(new_rules)
+
+    stats = {}
+    for rule in new_rules:
+        canonical = (rule.get("canonical_value") or "").strip()
+        if canonical:
+            stats.setdefault(canonical, {"keyword_count": 0, "blanks_filled": 0,
+                                         "flags": [], "sample_title": ""})
+    existing_owners = defaultdict(set)
+    for canonical, kw, _len in existing:
+        existing_owners[kw].add(canonical)
+    delta_owners = defaultdict(list)
+    for canonical, kw, _len in delta:
+        stats[canonical]["keyword_count"] += 1
+        delta_owners[kw].append(canonical)
+    for kw, owners in delta_owners.items():
+        for canonical in sorted(set(owners)):
+            for other in sorted(existing_owners.get(kw, set()) - {canonical}):
+                stats[canonical]["flags"].append(f"COLLISION_EXISTING({kw} -> {other})")
+            if len(owners) > 1:
+                others = sorted(set(owners) - {canonical})
+                stats[canonical]["flags"].append(
+                    f"DUPLICATE_IN_DELTA({kw}" + (f" also in {', '.join(others)})" if others else ")"))
+
+    merged = existing + delta
+    blanks = [p for p in _active(products) if not p[filter_key]]
+    filled = 0
+    for p in blanks:
+        best, _ambiguous = match_title(p["title"], merged)
+        if best in stats and best != match_title(p["title"], existing)[0]:
+            s = stats[best]
+            s["blanks_filled"] += 1
+            s["sample_title"] = s["sample_title"] or p["title"]
+            filled += 1
+    rows = [{"canonical": c, "keyword_count": s["keyword_count"], "blanks_filled": s["blanks_filled"],
+             "flags": "|".join(s["flags"]), "sample_title": s["sample_title"]}
+            for c, s in stats.items()]
+    rows.sort(key=lambda r: (-r["blanks_filled"], r["canonical"]))
+    return {"rows": rows, "new_rules": len(rows), "blanks_filled": filled, "blanks": len(blanks)}
+
+
 def pass_fill_rates(products, cfg=None, prev=None, prev_name=None):
     total = len(products)
     active = _active(products)
@@ -143,9 +237,18 @@ def pass_fill_rates(products, cfg=None, prev=None, prev_name=None):
         summary[f"fill_{key}"] = fill(sum(1 for p in active if (p["_mf"].get(key) or "").strip()))
 
     grouped = [p for p in active if any(t.startswith("group_") for t in p["_tags_lc"])]
+    members = defaultdict(set)
+    for p in grouped:
+        for t in p["_tags_lc"]:
+            if t.startswith("group_"):
+                members[t].add(p["gid"])
+    multi = {t for t, m in members.items() if len(m) >= 2}
+    in_multi = [p for p in grouped if any(t in multi for t in p["_tags_lc"])]
     summary["sibling_scope"] = {
         "products_with_group_tag": len(grouped),
-        "filled_within_group_scope": sum(1 for p in grouped if (p["_mf"].get("sibling_products") or "").strip()),
+        "multi_member_groups": len(multi),
+        "products_in_multi_member_groups": len(in_multi),
+        "filled_in_multi_member_groups": sum(1 for p in in_multi if (p["_mf"].get("sibling_products") or "").strip()),
     }
 
     summary["type_top12"] = Counter(p["type"] for p in active).most_common(12)
