@@ -17,7 +17,11 @@ def load_task_rules(path):
     with open(path, encoding="utf-8") as fh:
         cfg = json.load(fh)
     cfg.setdefault("_meta", {})
-    cfg["_meta"]["file_date"] = datetime.date.fromtimestamp(os.path.getmtime(path)).isoformat()
+    try:
+        file_date = datetime.datetime.fromisoformat(cfg["_meta"].get("generated_at")).date().isoformat()
+    except (TypeError, ValueError):
+        file_date = datetime.date.fromtimestamp(os.path.getmtime(path)).isoformat()
+    cfg["_meta"]["file_date"] = file_date
     for handle in ("club", "country", "player", "tournament"):
         entry = cfg.get(handle)
         if entry and entry.get("keyword_rules"):

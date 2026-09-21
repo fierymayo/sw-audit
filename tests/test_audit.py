@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import sys
@@ -13,6 +14,7 @@ from passes import (pass_addon_coverage, pass_fill_rates, pass_filter_blanks,
 from rules import config_lint, load_task_rules
 
 FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+NOW = datetime.datetime(2026, 9, 21, 7, 0, tzinfo=datetime.timezone.utc)
 
 
 def load_fixture_state():
@@ -60,7 +62,7 @@ class TestReasonEngine(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.cfg, cls.products = load_fixture_state()
-        cls.blanks = pass_filter_blanks(cls.products, cls.cfg, lag_hours=48)
+        cls.blanks = pass_filter_blanks(cls.products, cls.cfg, lag_hours=48, now=NOW)
         cls.by_handle = {r["handle"]: r for r in cls.blanks["player_filter"]}
         cls.club_by_handle = {r["handle"]: r for r in cls.blanks["club_filter"]}
 
@@ -135,6 +137,21 @@ class TestOtherPasses(unittest.TestCase):
         findings = config_lint(self.cfg)
         errors = [f for f in findings if f["level"] == "ERROR"]
         self.assertTrue(any("Leon FC" in f["message"] for f in errors))
+
+
+class TestRulesFileDate(unittest.TestCase):
+    def test_prefers_generated_at(self):
+        cfg = load_task_rules(os.path.join(FIXTURES, "test-config.json"))
+        self.assertEqual(cfg["_meta"]["file_date"], "2026-09-21")
+
+    def test_falls_back_to_mtime(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = os.path.join(td, "cfg.json")
+            with open(path, "w") as fh:
+                json.dump({}, fh)
+            ts = datetime.datetime(2025, 3, 4, 12).timestamp()
+            os.utime(path, (ts, ts))
+            self.assertEqual(load_task_rules(path)["_meta"]["file_date"], "2025-03-04")
 
 
 class TestGenerator(unittest.TestCase):

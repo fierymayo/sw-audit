@@ -6,7 +6,7 @@ Read-only. Pulls the full catalog in one Shopify **bulk operation**, caches it a
 
 ```
 pip install -r requirements.txt        # python-dotenv (+ reportlab, only needed for --pdf)
-cp .env.example .env                   # fill in SHOP_DOMAIN + ADMIN_TOKEN
+cp .env.example .env                   # fill in SHOP_DOMAIN + CLIENT_ID + CLIENT_SECRET (ADMIN_TOKEN = optional override)
 python make_task_configs.py            # after dropping Mechanic exports into task-exports/ (see below)
 ```
 
