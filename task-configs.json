@@ -1,0 +1,2499 @@
+{
+  "_meta": {
+    "generated_at": "2026-09-21T04:26:39",
+    "sources": [
+      "club.json",
+      "country.json",
+      "player.json",
+      "subcat.json",
+      "normalize.json"
+    ]
+  },
+  "club": {
+    "task_id": "488c5217-2146-40a9-a7d5-046ef9ddaca0",
+    "task_name": "Sync club filter metafield from title",
+    "write_mode": "add_only",
+    "keyword_rules": [
+      {
+        "canonical_value": "AC Milan",
+        "safe_keywords": [
+          "ac milan"
+        ]
+      },
+      {
+        "canonical_value": "AFC Ajax",
+        "safe_keywords": [
+          "afc ajax",
+          "ajax"
+        ]
+      },
+      {
+        "canonical_value": "Al Hilal",
+        "safe_keywords": [
+          "al hilal"
+        ]
+      },
+      {
+        "canonical_value": "Al Nassr",
+        "safe_keywords": [
+          "al nassr"
+        ]
+      },
+      {
+        "canonical_value": "Angel City FC",
+        "safe_keywords": [
+          "angel city"
+        ]
+      },
+      {
+        "canonical_value": "Arsenal FC",
+        "safe_keywords": [
+          "arsenal"
+        ]
+      },
+      {
+        "canonical_value": "AS Roma",
+        "safe_keywords": [
+          "as roma",
+          "roma"
+        ]
+      },
+      {
+        "canonical_value": "Aston Villa",
+        "safe_keywords": [
+          "aston villa"
+        ]
+      },
+      {
+        "canonical_value": "Atlanta United FC",
+        "safe_keywords": [
+          "atlanta united"
+        ]
+      },
+      {
+        "canonical_value": "Atlas FC",
+        "safe_keywords": [
+          "atlas fc"
+        ]
+      },
+      {
+        "canonical_value": "Atletico Madrid",
+        "safe_keywords": [
+          "atletico madrid",
+          "atletico de madrid"
+        ]
+      },
+      {
+        "canonical_value": "Austin FC",
+        "safe_keywords": [
+          "austin fc"
+        ]
+      },
+      {
+        "canonical_value": "Bayer Leverkusen",
+        "safe_keywords": [
+          "bayer leverkusen",
+          "leverkusen"
+        ]
+      },
+      {
+        "canonical_value": "Boca Juniors",
+        "safe_keywords": [
+          "boca juniors"
+        ]
+      },
+      {
+        "canonical_value": "Borussia Dortmund",
+        "safe_keywords": [
+          "borussia dortmund",
+          "dortmund"
+        ]
+      },
+      {
+        "canonical_value": "Borussia Monchengladbach",
+        "safe_keywords": [
+          "monchengladbach",
+          "gladbach"
+        ]
+      },
+      {
+        "canonical_value": "Bournemouth",
+        "safe_keywords": [
+          "bournemouth"
+        ]
+      },
+      {
+        "canonical_value": "Brentford",
+        "safe_keywords": [
+          "brentford"
+        ]
+      },
+      {
+        "canonical_value": "Celtic FC",
+        "safe_keywords": [
+          "celtic"
+        ]
+      },
+      {
+        "canonical_value": "CF Pachuca",
+        "safe_keywords": [
+          "cf pachuca",
+          "pachuca"
+        ]
+      },
+      {
+        "canonical_value": "Charlotte FC",
+        "safe_keywords": [
+          "charlotte fc"
+        ]
+      },
+      {
+        "canonical_value": "Chelsea FC",
+        "safe_keywords": [
+          "chelsea"
+        ]
+      },
+      {
+        "canonical_value": "Chivas de Guadalajara",
+        "safe_keywords": [
+          "chivas",
+          "guadalajara"
+        ]
+      },
+      {
+        "canonical_value": "Club America",
+        "safe_keywords": [
+          "club america"
+        ]
+      },
+      {
+        "canonical_value": "Club Tijuana",
+        "safe_keywords": [
+          "club tijuana",
+          "tijuana",
+          "xolos"
+        ]
+      },
+      {
+        "canonical_value": "Columbus Crew",
+        "safe_keywords": [
+          "columbus crew"
+        ]
+      },
+      {
+        "canonical_value": "Corinthians",
+        "safe_keywords": [
+          "corinthians"
+        ]
+      },
+      {
+        "canonical_value": "CR Flamengo",
+        "safe_keywords": [
+          "flamengo",
+          "cr flamengo"
+        ]
+      },
+      {
+        "canonical_value": "Cruz Azul",
+        "safe_keywords": [
+          "cruz azul"
+        ]
+      },
+      {
+        "canonical_value": "Dorados",
+        "safe_keywords": [
+          "dorados"
+        ]
+      },
+      {
+        "canonical_value": "Everton FC",
+        "safe_keywords": [
+          "everton"
+        ]
+      },
+      {
+        "canonical_value": "FC Barcelona",
+        "safe_keywords": [
+          "fc barcelona",
+          "barcelona"
+        ]
+      },
+      {
+        "canonical_value": "FC Bayern Munich",
+        "safe_keywords": [
+          "fc bayern",
+          "bayern munich",
+          "bayern"
+        ]
+      },
+      {
+        "canonical_value": "FC Dallas",
+        "safe_keywords": [
+          "fc dallas"
+        ]
+      },
+      {
+        "canonical_value": "FC Juarez",
+        "safe_keywords": [
+          "fc juarez"
+        ]
+      },
+      {
+        "canonical_value": "FC Porto",
+        "safe_keywords": [
+          "porto"
+        ]
+      },
+      {
+        "canonical_value": "FC St. Pauli",
+        "safe_keywords": [
+          "st pauli",
+          "st. pauli"
+        ]
+      },
+      {
+        "canonical_value": "Fulham FC",
+        "safe_keywords": [
+          "fulham"
+        ]
+      },
+      {
+        "canonical_value": "Galatasaray SK",
+        "safe_keywords": [
+          "galatasaray"
+        ]
+      },
+      {
+        "canonical_value": "Girona FC",
+        "safe_keywords": [
+          "girona"
+        ]
+      },
+      {
+        "canonical_value": "Inter Miami CF",
+        "safe_keywords": [
+          "inter miami"
+        ]
+      },
+      {
+        "canonical_value": "Inter Milan",
+        "safe_keywords": [
+          "inter milan"
+        ]
+      },
+      {
+        "canonical_value": "Ipswich Town",
+        "safe_keywords": [
+          "ipswich"
+        ]
+      },
+      {
+        "canonical_value": "Juventus FC",
+        "safe_keywords": [
+          "juventus"
+        ]
+      },
+      {
+        "canonical_value": "LA Galaxy",
+        "safe_keywords": [
+          "la galaxy"
+        ]
+      },
+      {
+        "canonical_value": "LAFC",
+        "safe_keywords": [
+          "lafc"
+        ]
+      },
+      {
+        "canonical_value": "Leon FC",
+        "safe_keywords": [
+          "leon fc",
+          "charly leon",
+          "leon f c"
+        ]
+      },
+      {
+        "canonical_value": "Lille OSC",
+        "safe_keywords": [
+          "lille",
+          "losc"
+        ]
+      },
+      {
+        "canonical_value": "Liverpool FC",
+        "safe_keywords": [
+          "liverpool"
+        ]
+      },
+      {
+        "canonical_value": "Manchester City FC",
+        "safe_keywords": [
+          "manchester city"
+        ]
+      },
+      {
+        "canonical_value": "Manchester United FC",
+        "safe_keywords": [
+          "manchester united",
+          "mancheser united"
+        ]
+      },
+      {
+        "canonical_value": "Mazatlan FC",
+        "safe_keywords": [
+          "mazatlan"
+        ]
+      },
+      {
+        "canonical_value": "Minnesota United",
+        "safe_keywords": [
+          "minnesota united"
+        ]
+      },
+      {
+        "canonical_value": "Monterrey",
+        "safe_keywords": [
+          "monterrey"
+        ]
+      },
+      {
+        "canonical_value": "Nashville SC",
+        "safe_keywords": [
+          "nashville sc"
+        ]
+      },
+      {
+        "canonical_value": "Necaxa",
+        "safe_keywords": [
+          "necaxa"
+        ]
+      },
+      {
+        "canonical_value": "New York City FC",
+        "safe_keywords": [
+          "new york city fc",
+          "nycfc"
+        ]
+      },
+      {
+        "canonical_value": "Newcastle United",
+        "safe_keywords": [
+          "newcastle united",
+          "newcastle"
+        ]
+      },
+      {
+        "canonical_value": "Olympique Lyonnais",
+        "safe_keywords": [
+          "olympique lyonnais"
+        ]
+      },
+      {
+        "canonical_value": "Olympique Marseille",
+        "safe_keywords": [
+          "olympique marseille",
+          "marseille"
+        ]
+      },
+      {
+        "canonical_value": "Orlando City SC",
+        "safe_keywords": [
+          "orlando city"
+        ]
+      },
+      {
+        "canonical_value": "Paris Saint-Germain FC",
+        "safe_keywords": [
+          "paris saint germain",
+          "psg"
+        ]
+      },
+      {
+        "canonical_value": "Philadelphia Union",
+        "safe_keywords": [
+          "philadelphia union"
+        ]
+      },
+      {
+        "canonical_value": "Portland Timbers",
+        "safe_keywords": [
+          "portland timbers"
+        ]
+      },
+      {
+        "canonical_value": "PSV Eindhoven",
+        "safe_keywords": [
+          "psv eindhoven",
+          "psv"
+        ]
+      },
+      {
+        "canonical_value": "Puebla",
+        "safe_keywords": [
+          "puebla"
+        ]
+      },
+      {
+        "canonical_value": "Pumas UNAM",
+        "safe_keywords": [
+          "pumas unam",
+          "pumas"
+        ]
+      },
+      {
+        "canonical_value": "Rangers FC",
+        "safe_keywords": [
+          "rangers fc"
+        ]
+      },
+      {
+        "canonical_value": "RB Leipzig",
+        "safe_keywords": [
+          "rb leipzig",
+          "leipzig"
+        ]
+      },
+      {
+        "canonical_value": "Real Madrid",
+        "safe_keywords": [
+          "real madrid"
+        ]
+      },
+      {
+        "canonical_value": "River Plate",
+        "safe_keywords": [
+          "river plate"
+        ]
+      },
+      {
+        "canonical_value": "San Diego FC",
+        "safe_keywords": [
+          "san diego fc"
+        ]
+      },
+      {
+        "canonical_value": "San Diego Wave",
+        "safe_keywords": [
+          "san diego wave"
+        ]
+      },
+      {
+        "canonical_value": "San Jose Earthquakes",
+        "safe_keywords": [
+          "san jose earthquakes"
+        ]
+      },
+      {
+        "canonical_value": "Santos FC",
+        "safe_keywords": [
+          "santos fc"
+        ]
+      },
+      {
+        "canonical_value": "Santos Laguna",
+        "safe_keywords": [
+          "santos laguna"
+        ]
+      },
+      {
+        "canonical_value": "Seattle Sounders FC",
+        "safe_keywords": [
+          "seattle sounders"
+        ]
+      },
+      {
+        "canonical_value": "SL Benfica",
+        "safe_keywords": [
+          "sl benfica",
+          "benfica"
+        ]
+      },
+      {
+        "canonical_value": "SSC Napoli",
+        "safe_keywords": [
+          "ssc napoli",
+          "napoli"
+        ]
+      },
+      {
+        "canonical_value": "St. Louis City SC",
+        "safe_keywords": [
+          "st louis city",
+          "st. louis city",
+          "st louis fc"
+        ]
+      },
+      {
+        "canonical_value": "Tigres UANL",
+        "safe_keywords": [
+          "tigres uanl",
+          "tigres"
+        ]
+      },
+      {
+        "canonical_value": "Toronto FC",
+        "safe_keywords": [
+          "toronto fc"
+        ]
+      },
+      {
+        "canonical_value": "Tottenham Hotspur FC",
+        "safe_keywords": [
+          "tottenham"
+        ]
+      },
+      {
+        "canonical_value": "VfL Wolfsburg",
+        "safe_keywords": [
+          "wolfsburg"
+        ]
+      },
+      {
+        "canonical_value": "Villarreal CF",
+        "safe_keywords": [
+          "villarreal"
+        ]
+      },
+      {
+        "canonical_value": "West Ham United FC",
+        "safe_keywords": [
+          "west ham"
+        ]
+      },
+      {
+        "canonical_value": "Wrexham AFC",
+        "safe_keywords": [
+          "wrexham"
+        ]
+      }
+    ],
+    "allowed_values": [
+      "AC Milan",
+      "AFC Ajax",
+      "Al Hilal",
+      "Al Nassr",
+      "Angel City FC",
+      "Arsenal FC",
+      "AS Roma",
+      "Aston Villa",
+      "Atlanta United FC",
+      "Atlas FC",
+      "Atletico Madrid",
+      "Austin FC",
+      "Bayer Leverkusen",
+      "Boca Juniors",
+      "Borussia Dortmund",
+      "Borussia Monchengladbach",
+      "Bournemouth",
+      "Brentford",
+      "Celtic FC",
+      "CF Pachuca",
+      "Charlotte FC",
+      "Chelsea FC",
+      "Chivas de Guadalajara",
+      "Club America",
+      "Club Tijuana",
+      "Columbus Crew",
+      "Corinthians",
+      "CR Flamengo",
+      "Cruz Azul",
+      "Dorados",
+      "Everton FC",
+      "FC Barcelona",
+      "FC Bayern Munich",
+      "FC Dallas",
+      "FC Juarez",
+      "FC Porto",
+      "FC St. Pauli",
+      "Fulham FC",
+      "Galatasaray SK",
+      "Girona FC",
+      "Inter Miami CF",
+      "Inter Milan",
+      "Ipswich Town",
+      "Juventus FC",
+      "LA Galaxy",
+      "LAFC",
+      "Leon FC",
+      "Lille OSC",
+      "Liverpool FC",
+      "Manchester City FC",
+      "Manchester United FC",
+      "Mazatlan FC",
+      "Minnesota United",
+      "Monterrey",
+      "Nashville SC",
+      "Necaxa",
+      "New York City FC",
+      "Newcastle United",
+      "Olympique Lyonnais",
+      "Olympique Marseille",
+      "Orlando City SC",
+      "Paris Saint-Germain FC",
+      "Philadelphia Union",
+      "Portland Timbers",
+      "PSV Eindhoven",
+      "Puebla",
+      "Pumas UNAM",
+      "Rangers FC",
+      "RB Leipzig",
+      "Real Madrid",
+      "River Plate",
+      "San Diego FC",
+      "San Diego Wave",
+      "San Jose Earthquakes",
+      "Santos FC",
+      "Santos Laguna",
+      "Seattle Sounders FC",
+      "SL Benfica",
+      "SSC Napoli",
+      "St. Louis City SC",
+      "Tigres UANL",
+      "Toronto FC",
+      "Tottenham Hotspur FC",
+      "VfL Wolfsburg",
+      "Villarreal CF",
+      "West Ham United FC",
+      "Wrexham AFC"
+    ],
+    "metafield_key": "club_filter"
+  },
+  "country": {
+    "task_id": "6eafda0f-6e44-496e-bb27-d84344967a49",
+    "task_name": "Sync country filter metafield from title",
+    "write_mode": "add_only",
+    "keyword_rules": [
+      {
+        "canonical_value": "Argentina",
+        "safe_keywords": [
+          "argentina"
+        ]
+      },
+      {
+        "canonical_value": "Australia",
+        "safe_keywords": [
+          "australia"
+        ]
+      },
+      {
+        "canonical_value": "Belgium",
+        "safe_keywords": [
+          "belgium"
+        ]
+      },
+      {
+        "canonical_value": "Brazil",
+        "safe_keywords": [
+          "brazil"
+        ]
+      },
+      {
+        "canonical_value": "Canada",
+        "safe_keywords": [
+          "canada"
+        ]
+      },
+      {
+        "canonical_value": "Chile",
+        "safe_keywords": [
+          "chile"
+        ]
+      },
+      {
+        "canonical_value": "Colombia",
+        "safe_keywords": [
+          "colombia"
+        ]
+      },
+      {
+        "canonical_value": "Costa Rica",
+        "safe_keywords": [
+          "costa rica"
+        ]
+      },
+      {
+        "canonical_value": "Croatia",
+        "safe_keywords": [
+          "croatia"
+        ]
+      },
+      {
+        "canonical_value": "Czech Republic",
+        "safe_keywords": [
+          "czech republic"
+        ]
+      },
+      {
+        "canonical_value": "Ecuador",
+        "safe_keywords": [
+          "ecuador"
+        ]
+      },
+      {
+        "canonical_value": "Egypt",
+        "safe_keywords": [
+          "egypt"
+        ]
+      },
+      {
+        "canonical_value": "El Salvador",
+        "safe_keywords": [
+          "el salvador"
+        ]
+      },
+      {
+        "canonical_value": "England",
+        "safe_keywords": [
+          "england"
+        ]
+      },
+      {
+        "canonical_value": "France",
+        "safe_keywords": [
+          "france"
+        ]
+      },
+      {
+        "canonical_value": "Germany",
+        "safe_keywords": [
+          "germany"
+        ]
+      },
+      {
+        "canonical_value": "Ghana",
+        "safe_keywords": [
+          "ghana"
+        ]
+      },
+      {
+        "canonical_value": "Guatemala",
+        "safe_keywords": [
+          "guatemala"
+        ]
+      },
+      {
+        "canonical_value": "Honduras",
+        "safe_keywords": [
+          "honduras"
+        ]
+      },
+      {
+        "canonical_value": "Hungary",
+        "safe_keywords": [
+          "hungary"
+        ]
+      },
+      {
+        "canonical_value": "Ireland",
+        "safe_keywords": [
+          "ireland"
+        ]
+      },
+      {
+        "canonical_value": "Italy",
+        "safe_keywords": [
+          "italy"
+        ]
+      },
+      {
+        "canonical_value": "Ivory Coast",
+        "safe_keywords": [
+          "ivory coast"
+        ]
+      },
+      {
+        "canonical_value": "Jamaica",
+        "safe_keywords": [
+          "jamaica"
+        ]
+      },
+      {
+        "canonical_value": "Japan",
+        "safe_keywords": [
+          "japan"
+        ]
+      },
+      {
+        "canonical_value": "Mexico",
+        "safe_keywords": [
+          "mexico"
+        ]
+      },
+      {
+        "canonical_value": "Morocco",
+        "safe_keywords": [
+          "morocco"
+        ]
+      },
+      {
+        "canonical_value": "Netherlands",
+        "safe_keywords": [
+          "netherlands"
+        ]
+      },
+      {
+        "canonical_value": "Nigeria",
+        "safe_keywords": [
+          "nigeria"
+        ]
+      },
+      {
+        "canonical_value": "Norway",
+        "safe_keywords": [
+          "norway"
+        ]
+      },
+      {
+        "canonical_value": "Panama",
+        "safe_keywords": [
+          "panama"
+        ]
+      },
+      {
+        "canonical_value": "Paraguay",
+        "safe_keywords": [
+          "paraguay"
+        ]
+      },
+      {
+        "canonical_value": "Peru",
+        "safe_keywords": [
+          "peru"
+        ]
+      },
+      {
+        "canonical_value": "Poland",
+        "safe_keywords": [
+          "poland"
+        ]
+      },
+      {
+        "canonical_value": "Portugal",
+        "safe_keywords": [
+          "portugal"
+        ]
+      },
+      {
+        "canonical_value": "Qatar",
+        "safe_keywords": [
+          "qatar"
+        ]
+      },
+      {
+        "canonical_value": "Scotland",
+        "safe_keywords": [
+          "scotland"
+        ]
+      },
+      {
+        "canonical_value": "Senegal",
+        "safe_keywords": [
+          "senegal"
+        ]
+      },
+      {
+        "canonical_value": "South Korea",
+        "safe_keywords": [
+          "south korea"
+        ]
+      },
+      {
+        "canonical_value": "Spain",
+        "safe_keywords": [
+          "spain"
+        ]
+      },
+      {
+        "canonical_value": "Sweden",
+        "safe_keywords": [
+          "sweden"
+        ]
+      },
+      {
+        "canonical_value": "Switzerland",
+        "safe_keywords": [
+          "switzerland"
+        ]
+      },
+      {
+        "canonical_value": "United States",
+        "safe_keywords": [
+          "united states",
+          "usa"
+        ]
+      },
+      {
+        "canonical_value": "Uruguay",
+        "safe_keywords": [
+          "uruguay"
+        ]
+      },
+      {
+        "canonical_value": "Venezuela",
+        "safe_keywords": [
+          "venezuela"
+        ]
+      },
+      {
+        "canonical_value": "Wales",
+        "safe_keywords": [
+          "wales"
+        ]
+      }
+    ],
+    "allowed_values": [
+      "Argentina",
+      "Australia",
+      "Belgium",
+      "Brazil",
+      "Canada",
+      "Chile",
+      "Colombia",
+      "Costa Rica",
+      "Croatia",
+      "Czech Republic",
+      "Ecuador",
+      "Egypt",
+      "El Salvador",
+      "England",
+      "France",
+      "Germany",
+      "Ghana",
+      "Guatemala",
+      "Honduras",
+      "Hungary",
+      "Ireland",
+      "Italy",
+      "Ivory Coast",
+      "Jamaica",
+      "Japan",
+      "Mexico",
+      "Morocco",
+      "Netherlands",
+      "Nigeria",
+      "Norway",
+      "Panama",
+      "Paraguay",
+      "Peru",
+      "Poland",
+      "Portugal",
+      "Qatar",
+      "Scotland",
+      "Senegal",
+      "South Korea",
+      "Spain",
+      "Sweden",
+      "Switzerland",
+      "United States",
+      "Uruguay",
+      "Venezuela",
+      "Wales"
+    ],
+    "metafield_key": "country_filter"
+  },
+  "player": {
+    "task_id": "6af0e5de-4ae5-4163-9bed-cd120471b60a",
+    "task_name": "Sync player filter metafield from title",
+    "write_mode": "add_only",
+    "keyword_rules": [
+      {
+        "canonical_value": "Aaronson",
+        "safe_keywords": [
+          "aaronson",
+          "brenden aaronson"
+        ]
+      },
+      {
+        "canonical_value": "Adams",
+        "safe_keywords": [
+          "tyler adams"
+        ]
+      },
+      {
+        "canonical_value": "Adeyemi",
+        "safe_keywords": [
+          "adeyemi"
+        ]
+      },
+      {
+        "canonical_value": "Alexander-Arnold",
+        "safe_keywords": [
+          "alexander arnold",
+          "alexander-arnold"
+        ]
+      },
+      {
+        "canonical_value": "Alvarez",
+        "safe_keywords": [
+          "alvarez",
+          "álvarez"
+        ]
+      },
+      {
+        "canonical_value": "Ansu Fati",
+        "safe_keywords": [
+          "ansu fati"
+        ]
+      },
+      {
+        "canonical_value": "Antony",
+        "safe_keywords": [
+          "antony"
+        ]
+      },
+      {
+        "canonical_value": "Araujo",
+        "safe_keywords": [
+          "ronald araujo",
+          "r araujo"
+        ]
+      },
+      {
+        "canonical_value": "Aubameyang",
+        "safe_keywords": [
+          "aubameyang"
+        ]
+      },
+      {
+        "canonical_value": "Barella",
+        "safe_keywords": [
+          "barella",
+          "nicolo barella"
+        ]
+      },
+      {
+        "canonical_value": "Bastoni",
+        "safe_keywords": [
+          "bastoni"
+        ]
+      },
+      {
+        "canonical_value": "Bellingham",
+        "safe_keywords": [
+          "bellingham"
+        ]
+      },
+      {
+        "canonical_value": "Benzema",
+        "safe_keywords": [
+          "benzema",
+          "karim benzema"
+        ]
+      },
+      {
+        "canonical_value": "Bouanga",
+        "safe_keywords": [
+          "bouanga"
+        ]
+      },
+      {
+        "canonical_value": "Brandt",
+        "safe_keywords": [
+          "julian brandt"
+        ]
+      },
+      {
+        "canonical_value": "Bruno Fernandes",
+        "safe_keywords": [
+          "bruno fernandes"
+        ]
+      },
+      {
+        "canonical_value": "Bruno Guimaraes",
+        "safe_keywords": [
+          "bruno guimaraes"
+        ]
+      },
+      {
+        "canonical_value": "Caicedo",
+        "safe_keywords": [
+          "caicedo"
+        ]
+      },
+      {
+        "canonical_value": "Calhanoglu",
+        "safe_keywords": [
+          "calhanoglu"
+        ]
+      },
+      {
+        "canonical_value": "Camavinga",
+        "safe_keywords": [
+          "camavinga"
+        ]
+      },
+      {
+        "canonical_value": "Campana",
+        "safe_keywords": [
+          "campana"
+        ]
+      },
+      {
+        "canonical_value": "Casemiro",
+        "safe_keywords": [
+          "casemiro"
+        ]
+      },
+      {
+        "canonical_value": "Cherki",
+        "safe_keywords": [
+          "cherki"
+        ]
+      },
+      {
+        "canonical_value": "Chicharito",
+        "safe_keywords": [
+          "chicharito"
+        ]
+      },
+      {
+        "canonical_value": "Chiesa",
+        "safe_keywords": [
+          "chiesa"
+        ]
+      },
+      {
+        "canonical_value": "Christensen",
+        "safe_keywords": [
+          "christensen"
+        ]
+      },
+      {
+        "canonical_value": "Coman",
+        "safe_keywords": [
+          "kingsley coman",
+          "coman"
+        ]
+      },
+      {
+        "canonical_value": "Cucurella",
+        "safe_keywords": [
+          "cucurella"
+        ]
+      },
+      {
+        "canonical_value": "Cunha",
+        "safe_keywords": [
+          "cunha"
+        ]
+      },
+      {
+        "canonical_value": "Dalot",
+        "safe_keywords": [
+          "dalot",
+          "diogo dalot"
+        ]
+      },
+      {
+        "canonical_value": "Dani Olmo",
+        "safe_keywords": [
+          "dani olmo"
+        ]
+      },
+      {
+        "canonical_value": "Davies",
+        "safe_keywords": [
+          "alphonso davies"
+        ]
+      },
+      {
+        "canonical_value": "De Bruyne",
+        "safe_keywords": [
+          "de bruyne",
+          "kevin de bruyne"
+        ]
+      },
+      {
+        "canonical_value": "De Jong",
+        "safe_keywords": [
+          "de jong"
+        ]
+      },
+      {
+        "canonical_value": "Dembele",
+        "safe_keywords": [
+          "dembele",
+          "dembélé",
+          "ousmane dembele"
+        ]
+      },
+      {
+        "canonical_value": "Depay",
+        "safe_keywords": [
+          "memphis depay",
+          "depay"
+        ]
+      },
+      {
+        "canonical_value": "Dest",
+        "safe_keywords": [
+          "sergino dest"
+        ]
+      },
+      {
+        "canonical_value": "Di Maria",
+        "safe_keywords": [
+          "di maria",
+          "di maría"
+        ]
+      },
+      {
+        "canonical_value": "Diallo",
+        "safe_keywords": [
+          "amad diallo"
+        ]
+      },
+      {
+        "canonical_value": "Diaz",
+        "safe_keywords": [
+          "luis diaz",
+          "luis díaz"
+        ]
+      },
+      {
+        "canonical_value": "Dimarco",
+        "safe_keywords": [
+          "dimarco"
+        ]
+      },
+      {
+        "canonical_value": "Doku",
+        "safe_keywords": [
+          "doku"
+        ]
+      },
+      {
+        "canonical_value": "Dybala",
+        "safe_keywords": [
+          "dybala",
+          "paulo dybala"
+        ]
+      },
+      {
+        "canonical_value": "Elanga",
+        "safe_keywords": [
+          "anthony elanga",
+          "elanga"
+        ]
+      },
+      {
+        "canonical_value": "Emre Can",
+        "safe_keywords": [
+          "emre can"
+        ]
+      },
+      {
+        "canonical_value": "Endrick",
+        "safe_keywords": [
+          "endrick"
+        ]
+      },
+      {
+        "canonical_value": "Estevao",
+        "safe_keywords": [
+          "estevao"
+        ]
+      },
+      {
+        "canonical_value": "Felix",
+        "safe_keywords": [
+          "joao felix",
+          "joão félix"
+        ]
+      },
+      {
+        "canonical_value": "Ferran Torres",
+        "safe_keywords": [
+          "ferran torres"
+        ]
+      },
+      {
+        "canonical_value": "Foden",
+        "safe_keywords": [
+          "foden",
+          "phil foden"
+        ]
+      },
+      {
+        "canonical_value": "Frattesi",
+        "safe_keywords": [
+          "frattesi"
+        ]
+      },
+      {
+        "canonical_value": "Frimpong",
+        "safe_keywords": [
+          "frimpong"
+        ]
+      },
+      {
+        "canonical_value": "Fullkrug",
+        "safe_keywords": [
+          "fullkrug"
+        ]
+      },
+      {
+        "canonical_value": "Gabriel Jesus",
+        "safe_keywords": [
+          "gabriel jesus"
+        ]
+      },
+      {
+        "canonical_value": "Gakpo",
+        "safe_keywords": [
+          "gakpo"
+        ]
+      },
+      {
+        "canonical_value": "Garnacho",
+        "safe_keywords": [
+          "garnacho"
+        ]
+      },
+      {
+        "canonical_value": "Gavi",
+        "safe_keywords": [
+          "gavi"
+        ]
+      },
+      {
+        "canonical_value": "Gittens",
+        "safe_keywords": [
+          "gittens"
+        ]
+      },
+      {
+        "canonical_value": "Gnabry",
+        "safe_keywords": [
+          "gnabry"
+        ]
+      },
+      {
+        "canonical_value": "Gordon",
+        "safe_keywords": [
+          "anthony gordon"
+        ]
+      },
+      {
+        "canonical_value": "Goretzka",
+        "safe_keywords": [
+          "goretzka"
+        ]
+      },
+      {
+        "canonical_value": "Grealish",
+        "safe_keywords": [
+          "grealish",
+          "jack grealish"
+        ]
+      },
+      {
+        "canonical_value": "Griezmann",
+        "safe_keywords": [
+          "griezmann",
+          "antoine griezmann"
+        ]
+      },
+      {
+        "canonical_value": "Guler",
+        "safe_keywords": [
+          "arda guler"
+        ]
+      },
+      {
+        "canonical_value": "Gundogan",
+        "safe_keywords": [
+          "gundogan"
+        ]
+      },
+      {
+        "canonical_value": "Gyokeres",
+        "safe_keywords": [
+          "gyokeres"
+        ]
+      },
+      {
+        "canonical_value": "Haaland",
+        "safe_keywords": [
+          "erling haaland",
+          "haaland"
+        ]
+      },
+      {
+        "canonical_value": "Havertz",
+        "safe_keywords": [
+          "havertz",
+          "kai havertz"
+        ]
+      },
+      {
+        "canonical_value": "Henry",
+        "safe_keywords": [
+          "henry martin"
+        ]
+      },
+      {
+        "canonical_value": "Hojlund",
+        "safe_keywords": [
+          "hojlund"
+        ]
+      },
+      {
+        "canonical_value": "Immobile",
+        "safe_keywords": [
+          "immobile"
+        ]
+      },
+      {
+        "canonical_value": "Isak",
+        "safe_keywords": [
+          "isak"
+        ]
+      },
+      {
+        "canonical_value": "Jimenez",
+        "safe_keywords": [
+          "jimenez",
+          "jiménez",
+          "raul jimenez"
+        ]
+      },
+      {
+        "canonical_value": "Joao Pedro",
+        "safe_keywords": [
+          "joao pedro"
+        ]
+      },
+      {
+        "canonical_value": "Jonathan David",
+        "safe_keywords": [
+          "jonathan david"
+        ]
+      },
+      {
+        "canonical_value": "Jorginho",
+        "safe_keywords": [
+          "jorginho"
+        ]
+      },
+      {
+        "canonical_value": "Kane",
+        "safe_keywords": [
+          "harry kane",
+          "kane"
+        ]
+      },
+      {
+        "canonical_value": "Kimmich",
+        "safe_keywords": [
+          "kimmich",
+          "joshua kimmich"
+        ]
+      },
+      {
+        "canonical_value": "Konate",
+        "safe_keywords": [
+          "ibrahima konate"
+        ]
+      },
+      {
+        "canonical_value": "Koopmeiners",
+        "safe_keywords": [
+          "koopmeiners"
+        ]
+      },
+      {
+        "canonical_value": "Kounde",
+        "safe_keywords": [
+          "kounde"
+        ]
+      },
+      {
+        "canonical_value": "Kovacic",
+        "safe_keywords": [
+          "kovacic",
+          "kovačić"
+        ]
+      },
+      {
+        "canonical_value": "Kroos",
+        "safe_keywords": [
+          "toni kroos",
+          "kroos"
+        ]
+      },
+      {
+        "canonical_value": "Kvaratskhelia",
+        "safe_keywords": [
+          "kvaratskhelia"
+        ]
+      },
+      {
+        "canonical_value": "Lamine Yamal",
+        "safe_keywords": [
+          "lamine yamal"
+        ]
+      },
+      {
+        "canonical_value": "Leon Bailey",
+        "safe_keywords": [
+          "leon bailey"
+        ]
+      },
+      {
+        "canonical_value": "Lewandowski",
+        "safe_keywords": [
+          "lewandowski",
+          "robert lewandowski"
+        ]
+      },
+      {
+        "canonical_value": "Lloris",
+        "safe_keywords": [
+          "lloris"
+        ]
+      },
+      {
+        "canonical_value": "Loftus-Cheek",
+        "safe_keywords": [
+          "loftus cheek",
+          "loftus-cheek"
+        ]
+      },
+      {
+        "canonical_value": "Lozano",
+        "safe_keywords": [
+          "lozano",
+          "hirving lozano"
+        ]
+      },
+      {
+        "canonical_value": "Lukaku",
+        "safe_keywords": [
+          "lukaku",
+          "romelu lukaku"
+        ]
+      },
+      {
+        "canonical_value": "Mac Allister",
+        "safe_keywords": [
+          "mac allister"
+        ]
+      },
+      {
+        "canonical_value": "Mainoo",
+        "safe_keywords": [
+          "mainoo"
+        ]
+      },
+      {
+        "canonical_value": "Maradona",
+        "safe_keywords": [
+          "maradona",
+          "diego maradona"
+        ]
+      },
+      {
+        "canonical_value": "Martinelli",
+        "safe_keywords": [
+          "martinelli"
+        ]
+      },
+      {
+        "canonical_value": "Martinez",
+        "safe_keywords": [
+          "lautaro martinez",
+          "lautaro martínez"
+        ]
+      },
+      {
+        "canonical_value": "Mazraoui",
+        "safe_keywords": [
+          "mazraoui"
+        ]
+      },
+      {
+        "canonical_value": "Mbappe",
+        "safe_keywords": [
+          "kylian mbappe",
+          "mbappe"
+        ]
+      },
+      {
+        "canonical_value": "Mbeumo",
+        "safe_keywords": [
+          "mbeumo"
+        ]
+      },
+      {
+        "canonical_value": "Mckennie",
+        "safe_keywords": [
+          "mckennie",
+          "weston mckennie"
+        ]
+      },
+      {
+        "canonical_value": "Merino",
+        "safe_keywords": [
+          "mikel merino"
+        ]
+      },
+      {
+        "canonical_value": "Messi",
+        "safe_keywords": [
+          "lionel messi",
+          "messi"
+        ]
+      },
+      {
+        "canonical_value": "Modric",
+        "safe_keywords": [
+          "modric",
+          "luka modric"
+        ]
+      },
+      {
+        "canonical_value": "Morata",
+        "safe_keywords": [
+          "morata"
+        ]
+      },
+      {
+        "canonical_value": "Morgan",
+        "safe_keywords": [
+          "alex morgan"
+        ]
+      },
+      {
+        "canonical_value": "Mount",
+        "safe_keywords": [
+          "mount",
+          "mason mount"
+        ]
+      },
+      {
+        "canonical_value": "Mukiele",
+        "safe_keywords": [
+          "mukiele"
+        ]
+      },
+      {
+        "canonical_value": "Muller",
+        "safe_keywords": [
+          "muller",
+          "müller",
+          "thomas muller",
+          "thomas müller"
+        ]
+      },
+      {
+        "canonical_value": "Musah",
+        "safe_keywords": [
+          "musah",
+          "yunus musah"
+        ]
+      },
+      {
+        "canonical_value": "Musiala",
+        "safe_keywords": [
+          "musiala",
+          "jamal musiala"
+        ]
+      },
+      {
+        "canonical_value": "Neymar",
+        "safe_keywords": [
+          "neymar jr",
+          "neymar jr."
+        ]
+      },
+      {
+        "canonical_value": "Nico Williams",
+        "safe_keywords": [
+          "nico williams"
+        ]
+      },
+      {
+        "canonical_value": "Nicolas Pepe",
+        "safe_keywords": [
+          "nicolas pepe"
+        ]
+      },
+      {
+        "canonical_value": "Nketiah",
+        "safe_keywords": [
+          "nketiah"
+        ]
+      },
+      {
+        "canonical_value": "Nkunku",
+        "safe_keywords": [
+          "nkunku"
+        ]
+      },
+      {
+        "canonical_value": "Nunez",
+        "safe_keywords": [
+          "nunez",
+          "núñez",
+          "darwin nunez"
+        ]
+      },
+      {
+        "canonical_value": "Odegaard",
+        "safe_keywords": [
+          "odegaard",
+          "ødegaard",
+          "martin odegaard"
+        ]
+      },
+      {
+        "canonical_value": "Olise",
+        "safe_keywords": [
+          "olise"
+        ]
+      },
+      {
+        "canonical_value": "Openda",
+        "safe_keywords": [
+          "openda"
+        ]
+      },
+      {
+        "canonical_value": "Palhinha",
+        "safe_keywords": [
+          "palhinha"
+        ]
+      },
+      {
+        "canonical_value": "Palmer",
+        "safe_keywords": [
+          "cole palmer"
+        ]
+      },
+      {
+        "canonical_value": "Pavard",
+        "safe_keywords": [
+          "pavard"
+        ]
+      },
+      {
+        "canonical_value": "Pedri",
+        "safe_keywords": [
+          "pedri"
+        ]
+      },
+      {
+        "canonical_value": "Pele",
+        "safe_keywords": [
+          "pele",
+          "pelé"
+        ]
+      },
+      {
+        "canonical_value": "Pobega",
+        "safe_keywords": [
+          "pobega"
+        ]
+      },
+      {
+        "canonical_value": "Puig",
+        "safe_keywords": [
+          "riqui puig"
+        ]
+      },
+      {
+        "canonical_value": "Pulisic",
+        "safe_keywords": [
+          "christian pulisic",
+          "pulisic"
+        ]
+      },
+      {
+        "canonical_value": "Raphinha",
+        "safe_keywords": [
+          "raphinha"
+        ]
+      },
+      {
+        "canonical_value": "Rashford",
+        "safe_keywords": [
+          "marcus rashford",
+          "rashford"
+        ]
+      },
+      {
+        "canonical_value": "Retegui",
+        "safe_keywords": [
+          "retegui"
+        ]
+      },
+      {
+        "canonical_value": "Reus",
+        "safe_keywords": [
+          "reus",
+          "marco reus"
+        ]
+      },
+      {
+        "canonical_value": "Reyna",
+        "safe_keywords": [
+          "gio reyna"
+        ]
+      },
+      {
+        "canonical_value": "Rice",
+        "safe_keywords": [
+          "declan rice"
+        ]
+      },
+      {
+        "canonical_value": "Robinson",
+        "safe_keywords": [
+          "antonee robinson"
+        ]
+      },
+      {
+        "canonical_value": "Rodrygo",
+        "safe_keywords": [
+          "rodrygo"
+        ]
+      },
+      {
+        "canonical_value": "Ronaldo",
+        "safe_keywords": [
+          "cristiano ronaldo",
+          "ronaldo"
+        ]
+      },
+      {
+        "canonical_value": "Rudiger",
+        "safe_keywords": [
+          "rudiger",
+          "rüdiger"
+        ]
+      },
+      {
+        "canonical_value": "Ryerson",
+        "safe_keywords": [
+          "ryerson"
+        ]
+      },
+      {
+        "canonical_value": "Sabitzer",
+        "safe_keywords": [
+          "sabitzer"
+        ]
+      },
+      {
+        "canonical_value": "Saka",
+        "safe_keywords": [
+          "bukayo saka",
+          "saka"
+        ]
+      },
+      {
+        "canonical_value": "Salah",
+        "safe_keywords": [
+          "mohamed salah",
+          "salah"
+        ]
+      },
+      {
+        "canonical_value": "Sancho",
+        "safe_keywords": [
+          "jadon sancho",
+          "sancho"
+        ]
+      },
+      {
+        "canonical_value": "Sane",
+        "safe_keywords": [
+          "leroy sane"
+        ]
+      },
+      {
+        "canonical_value": "Santi Gimenez",
+        "safe_keywords": [
+          "santi gimenez",
+          "santiago gimenez"
+        ]
+      },
+      {
+        "canonical_value": "Savinho",
+        "safe_keywords": [
+          "savinho"
+        ]
+      },
+      {
+        "canonical_value": "Schlotterbeck",
+        "safe_keywords": [
+          "schlotterbeck"
+        ]
+      },
+      {
+        "canonical_value": "Sesko",
+        "safe_keywords": [
+          "sesko"
+        ]
+      },
+      {
+        "canonical_value": "Son",
+        "safe_keywords": [
+          "heung min son",
+          "hueng min son",
+          "son heung min"
+        ]
+      },
+      {
+        "canonical_value": "Suarez",
+        "safe_keywords": [
+          "suarez"
+        ]
+      },
+      {
+        "canonical_value": "Szoboszlai",
+        "safe_keywords": [
+          "szoboszlai"
+        ]
+      },
+      {
+        "canonical_value": "Tchouameni",
+        "safe_keywords": [
+          "tchouameni"
+        ]
+      },
+      {
+        "canonical_value": "Thiago Silva",
+        "safe_keywords": [
+          "thiago silva"
+        ]
+      },
+      {
+        "canonical_value": "Thuram",
+        "safe_keywords": [
+          "marcus thuram",
+          "thuram"
+        ]
+      },
+      {
+        "canonical_value": "Tillman",
+        "safe_keywords": [
+          "tillman",
+          "malik tillman"
+        ]
+      },
+      {
+        "canonical_value": "Trossard",
+        "safe_keywords": [
+          "trossard",
+          "leandro trossard"
+        ]
+      },
+      {
+        "canonical_value": "Valverde",
+        "safe_keywords": [
+          "valverde",
+          "fede valverde"
+        ]
+      },
+      {
+        "canonical_value": "Van Dijk",
+        "safe_keywords": [
+          "van dijk",
+          "virgil van dijk"
+        ]
+      },
+      {
+        "canonical_value": "Vela",
+        "safe_keywords": [
+          "carlos vela"
+        ]
+      },
+      {
+        "canonical_value": "Vini Jr",
+        "safe_keywords": [
+          "vini jr",
+          "vinicius"
+        ]
+      },
+      {
+        "canonical_value": "Vlahovic",
+        "safe_keywords": [
+          "vlahovic",
+          "dusan vlahovic"
+        ]
+      },
+      {
+        "canonical_value": "Watkins",
+        "safe_keywords": [
+          "ollie watkins",
+          "watkins"
+        ]
+      },
+      {
+        "canonical_value": "Weah",
+        "safe_keywords": [
+          "weah",
+          "timothy weah"
+        ]
+      },
+      {
+        "canonical_value": "Wirtz",
+        "safe_keywords": [
+          "wirtz",
+          "florian wirtz"
+        ]
+      },
+      {
+        "canonical_value": "Xavi Simons",
+        "safe_keywords": [
+          "xavi simons"
+        ]
+      },
+      {
+        "canonical_value": "Yildiz",
+        "safe_keywords": [
+          "kenan yildiz",
+          "yildiz"
+        ]
+      },
+      {
+        "canonical_value": "Zaccagni",
+        "safe_keywords": [
+          "zaccagni"
+        ]
+      },
+      {
+        "canonical_value": "Zirkzee",
+        "safe_keywords": [
+          "zirkzee"
+        ]
+      },
+      {
+        "canonical_value": "Zubimendi",
+        "safe_keywords": [
+          "zubimendi"
+        ]
+      }
+    ],
+    "allowed_values": [
+      "Aaronson",
+      "Adams",
+      "Adeyemi",
+      "Alexander-Arnold",
+      "Alvarez",
+      "Ansu Fati",
+      "Antony",
+      "Araujo",
+      "Aubameyang",
+      "Barella",
+      "Bastoni",
+      "Bellingham",
+      "Benzema",
+      "Bouanga",
+      "Brandt",
+      "Bruno Fernandes",
+      "Bruno Guimaraes",
+      "Caicedo",
+      "Calhanoglu",
+      "Camavinga",
+      "Campana",
+      "Casemiro",
+      "Cherki",
+      "Chicharito",
+      "Chiesa",
+      "Christensen",
+      "Coman",
+      "Cucurella",
+      "Cunha",
+      "Dalot",
+      "Dani Olmo",
+      "Davies",
+      "De Bruyne",
+      "De Jong",
+      "Dembele",
+      "Depay",
+      "Dest",
+      "Di Maria",
+      "Diallo",
+      "Diaz",
+      "Dimarco",
+      "Doku",
+      "Dybala",
+      "Elanga",
+      "Emre Can",
+      "Endrick",
+      "Estevao",
+      "Felix",
+      "Ferran Torres",
+      "Foden",
+      "Frattesi",
+      "Frimpong",
+      "Fullkrug",
+      "Gabriel Jesus",
+      "Gakpo",
+      "Garnacho",
+      "Gavi",
+      "Gittens",
+      "Gnabry",
+      "Gordon",
+      "Goretzka",
+      "Grealish",
+      "Griezmann",
+      "Guler",
+      "Gundogan",
+      "Gyokeres",
+      "Haaland",
+      "Havertz",
+      "Henry",
+      "Hojlund",
+      "Immobile",
+      "Isak",
+      "Jimenez",
+      "Joao Pedro",
+      "Jonathan David",
+      "Jorginho",
+      "Kane",
+      "Kimmich",
+      "Konate",
+      "Koopmeiners",
+      "Kounde",
+      "Kovacic",
+      "Kroos",
+      "Kvaratskhelia",
+      "Lamine Yamal",
+      "Leon Bailey",
+      "Lewandowski",
+      "Lloris",
+      "Loftus-Cheek",
+      "Lozano",
+      "Lukaku",
+      "Mac Allister",
+      "Mainoo",
+      "Maradona",
+      "Martinelli",
+      "Martinez",
+      "Mazraoui",
+      "Mbappe",
+      "Mbeumo",
+      "Mckennie",
+      "Merino",
+      "Messi",
+      "Modric",
+      "Morata",
+      "Morgan",
+      "Mount",
+      "Mukiele",
+      "Muller",
+      "Musah",
+      "Musiala",
+      "Neymar",
+      "Nico Williams",
+      "Nicolas Pepe",
+      "Nketiah",
+      "Nkunku",
+      "Nunez",
+      "Odegaard",
+      "Olise",
+      "Openda",
+      "Palhinha",
+      "Palmer",
+      "Pavard",
+      "Pedri",
+      "Pele",
+      "Pobega",
+      "Puig",
+      "Pulisic",
+      "Raphinha",
+      "Rashford",
+      "Retegui",
+      "Reus",
+      "Reyna",
+      "Rice",
+      "Robinson",
+      "Rodrygo",
+      "Ronaldo",
+      "Rudiger",
+      "Ryerson",
+      "Sabitzer",
+      "Saka",
+      "Salah",
+      "Sancho",
+      "Sane",
+      "Santi Gimenez",
+      "Savinho",
+      "Schlotterbeck",
+      "Sesko",
+      "Son",
+      "Suarez",
+      "Szoboszlai",
+      "Tchouameni",
+      "Thiago Silva",
+      "Thuram",
+      "Tillman",
+      "Trossard",
+      "Valverde",
+      "Van Dijk",
+      "Vela",
+      "Vini Jr",
+      "Vlahovic",
+      "Watkins",
+      "Weah",
+      "Wirtz",
+      "Xavi Simons",
+      "Yildiz",
+      "Zaccagni",
+      "Zirkzee",
+      "Zubimendi"
+    ],
+    "metafield_key": "player_filter"
+  },
+  "subcat": {
+    "task_id": "32fa6df3-2648-48ca-a848-95c8a947757a",
+    "task_name": "Add product SubCat and AgeGroup tags",
+    "addon_eligible_subcats": [
+      "SubCat_Air-Freshener",
+      "SubCat_Magnet",
+      "SubCat_Lanyard",
+      "SubCat_Enamel-Pin",
+      "SubCat_Keychain",
+      "SubCat_Decal",
+      "SubCat_Funko-Pop",
+      "SubCat_Mini-Figure",
+      "SubCat_Hat",
+      "SubCat_Hat-Snapback",
+      "SubCat_Hat-Beanie",
+      "SubCat_Hat-Bucket",
+      "SubCat_Scarf",
+      "SubCat_Poster",
+      "SubCat_Grip-Socks",
+      "SubCat_Shin-Guards",
+      "SubCat_Ball-Mini",
+      "SubCat_Cleat-Bag",
+      "SubCat_Sackpack",
+      "SubCat_Water-Bottle",
+      "SubCat_Sock-Tape",
+      "SubCat_Slides",
+      "SubCat_Soccer-Socks",
+      "SubCat_Glove-Wash",
+      "SubCat_Grip-Spray",
+      "SubCat_GK-Pants",
+      "SubCat_GK-Shorts",
+      "SubCat_Ball-Pump",
+      "SubCat_Ball-Bag"
+    ],
+    "replace_incorrect_subcat_tags": true,
+    "remove_addon_eligible_when_not_priority": false,
+    "product_type_map": {
+      "air freshener": "Air Freshener",
+      "enamel pin": "Enamel Pin",
+      "decal": "Decal / Sticker",
+      "sticker": "Decal / Sticker",
+      "decal / sticker": "Decal / Sticker",
+      "hat": "Hats",
+      "hats": "Hats",
+      "HATS": "Hats",
+      "short": "Shorts",
+      "shorts": "Shorts",
+      "shinguard": "Shin Guards",
+      "shin guards": "Shin Guards",
+      "shinguards": "Shin Guards",
+      "bags": "Bags",
+      "backpacks": "Bags",
+      "balls": "Balls",
+      "compression": "Compression",
+      "compression gear": "Compression",
+      "field player gloves": "Field Player Gloves",
+      "field gloves": "Field Player Gloves",
+      "footwear": "Footwear",
+      "shoes": "Footwear",
+      "cleats": "Footwear",
+      "goalkeeper gloves": "Goalkeeper Gloves",
+      "goalie gloves": "Goalkeeper Gloves",
+      "misc": "Misc",
+      "pants": "Pants",
+      "three quarter pants": "Pants",
+      "posters": "Posters",
+      "scarves": "Scarves",
+      "SCARVES": "Scarves",
+      "soccer collectibles": "Soccer Collectibles",
+      "socks": "Socks",
+      "water bottles": "Water Bottles",
+      "mini figures": "Mini Figures",
+      "accessories": "Accessories",
+      "equipment": "Accessories",
+      "ankle support": "Accessories",
+      "club jerseys": "Jerseys",
+      "country jerseys": "Jerseys",
+      "flags": "Accessories",
+      "namesets": "Accessories",
+      "unclassified": "Misc"
+    }
+  },
+  "normalize": {
+    "task_id": "3d13ffef-2101-455b-a940-54eeb7f4f7d0",
+    "task_name": "Normalize product types, vendors, and tag casing",
+    "vendor_map": {
+      "adidas": "adidas",
+      "nike": "Nike",
+      "puma": "Puma",
+      "joma": "Joma",
+      "reusch": "Reusch",
+      "charly": "Charly",
+      "umbro": "Umbro",
+      "topps": "Topps",
+      "fan ink": "Fan Ink",
+      "new era": "New Era",
+      "pirma": "Pirma",
+      "mueller": "Mueller",
+      "minix": "MiniX",
+      "panini": "Panini",
+      "banbotoys": "BanboToys",
+      "vizari": "Vizari",
+      "kwik goal": "Kwik Goal",
+      "oracle": "Oracle",
+      "soccer wearhouse": "Soccer Wearhouse",
+      "soccerwearhouse.com": "Soccer Wearhouse",
+      "funko": "Funko",
+      "west coast goalkeeping": "West Coast Goalkeeping",
+      "posters inc": "Posters Inc",
+      "under armour": "Under Armour",
+      "football machine": "Football Machine",
+      "hooligan apparel": "Hooligan Apparel",
+      "grip sox": "Grip Sox",
+      "ruffneck scarves": "Ruffneck",
+      "new balance": "New Balance",
+      "sr4u": "SR4U",
+      "diadora": "Diadora",
+      "rhinox": "RhinoX",
+      "trusox": "TruSox",
+      "hummel": "Hummel"
+    },
+    "title_prefix_vendor_corrections": {
+      "adidas": "adidas",
+      "Nike": "Nike",
+      "Puma": "Puma",
+      "PUMA": "Puma",
+      "Joma": "Joma",
+      "Reusch": "Reusch",
+      "Charly": "Charly",
+      "Umbro": "Umbro",
+      "Topps": "Topps",
+      "Fan Ink": "Fan Ink",
+      "New Era": "New Era",
+      "Pirma": "Pirma",
+      "Mueller": "Mueller",
+      "MiniX": "MiniX",
+      "Panini": "Panini",
+      "BanboToys": "BanboToys",
+      "Vizari": "Vizari",
+      "Kwik Goal": "Kwik Goal",
+      "Funko": "Funko",
+      "Oracle": "Oracle",
+      "West Coast": "West Coast Goalkeeping",
+      "Under Armour": "Under Armour",
+      "Football Machine": "Football Machine",
+      "Grip Sox": "Grip Sox",
+      "New Balance": "New Balance",
+      "SR4U": "SR4U",
+      "Diadora": "Diadora",
+      "RhinoX": "RhinoX",
+      "TruSox": "TruSox",
+      "Hummel": "Hummel"
+    },
+    "vendor_brand_tags": {
+      "adidas": "Brand_Adidas",
+      "nike": "Brand_Nike",
+      "puma": "Brand_Puma",
+      "charly": "Brand_Charly",
+      "umbro": "Brand_Umbro",
+      "reusch": "Brand_Reusch",
+      "joma": "Brand_Joma",
+      "pirma": "Brand_Pirma",
+      "vizari": "Brand_Vizari",
+      "new era": "Brand_New_Era",
+      "fan ink": "Brand_Fan_Ink",
+      "mueller": "Brand_Mueller",
+      "topps": "Brand_Topps",
+      "funko": "Brand_Funko",
+      "minix": "Brand_MiniX",
+      "panini": "Brand_Panini",
+      "banbotoys": "Brand_BanboToys",
+      "kwik goal": "Brand_Kwik_Goal",
+      "oracle": "Brand_Oracle",
+      "soccer wearhouse": "Brand_Soccer_Wearhouse",
+      "posters inc": "Brand_Posters_Inc",
+      "west coast goalkeeping": "Brand_West_Coast",
+      "under armour": "Brand_Under_Armour",
+      "rinat": "Brand_Rinat",
+      "official sports": "Brand_Official_Sports",
+      "hooligan apparel": "Brand_Hooligan_Apparel",
+      "football machine": "Brand_Football_Machine",
+      "ruffneck": "Brand_Ruffneck",
+      "grip sox": "Brand_Grip_Sox",
+      "new balance": "Brand_New_Balance",
+      "sr4u": "Brand_SR4U",
+      "diadora": "Brand_Diadora",
+      "rhinox": "Brand_RhinoX",
+      "trusox": "Brand_TruSox",
+      "hummel": "Brand_Hummel"
+    },
+    "product_type_map": {
+      "hat": "Hats",
+      "hats": "Hats",
+      "short": "Shorts",
+      "shorts": "Shorts",
+      "shinguard": "Shin Guards",
+      "shin guards": "Shin Guards",
+      "shinguards": "Shin Guards",
+      "sports bra": "Sports Bras",
+      "sports bras": "Sports Bras",
+      "t shirt": "T-Shirts",
+      "t-shirt": "T-Shirts",
+      "t-shirts": "T-Shirts",
+      "tshirt": "T-Shirts",
+      "tshirts": "T-Shirts",
+      "tee shirt": "T-Shirts",
+      "tee": "T-Shirts",
+      "bags": "Bags",
+      "backpacks": "Bags",
+      "balls": "Balls",
+      "compression": "Compression",
+      "compression gear": "Compression",
+      "field player gloves": "Field Player Gloves",
+      "field gloves": "Field Player Gloves",
+      "footwear": "Footwear",
+      "shoes": "Footwear",
+      "cleats": "Footwear",
+      "goalkeeper gloves": "Goalkeeper Gloves",
+      "goalie gloves": "Goalkeeper Gloves",
+      "hoodies": "Hoodies",
+      "hoodies.": "Hoodies",
+      "jackets": "Jackets",
+      "jersey": "Jerseys",
+      "jerseys": "Jerseys",
+      "club jerseys": "Jerseys",
+      "country jerseys": "Jerseys",
+      "misc": "Misc",
+      "pants": "Pants",
+      "three quarter pants": "Pants",
+      "posters": "Posters",
+      "scarves": "Scarves",
+      "soccer collectibles": "Soccer Collectibles",
+      "socks": "Socks",
+      "sweaters": "Sweaters",
+      "system": "System",
+      "shirts": "Shirts",
+      "equipment": "Accessories",
+      "ankle support": "Accessories",
+      "flags": "Accessories",
+      "namesets": "Accessories"
+    },
+    "blank_type_values": [
+      "Unclassified",
+      "Misc"
+    ]
+  }
+}

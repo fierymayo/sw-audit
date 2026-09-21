@@ -1,0 +1,2 @@
+python-dotenv
+reportlab   # only needed for --pdf

@@ -1,0 +1,131 @@
+{
+  "_meta": {
+    "generated_at": "2026-09-21T00:00:00"
+  },
+  "club": {
+    "task_id": "test-club",
+    "write_mode": "add_only",
+    "keyword_rules": [
+      {
+        "canonical_value": "Inter Miami CF",
+        "safe_keywords": [
+          "inter miami"
+        ]
+      },
+      {
+        "canonical_value": "Leon FC",
+        "safe_keywords": [
+          "leon fc",
+          "charly leon"
+        ]
+      },
+      {
+        "canonical_value": "FC Barcelona",
+        "safe_keywords": [
+          "fc barcelona",
+          "barcelona"
+        ]
+      }
+    ],
+    "allowed_values": [
+      "Inter Miami CF",
+      "FC Barcelona"
+    ]
+  },
+  "country": {
+    "task_id": "test-country",
+    "write_mode": "add_only",
+    "keyword_rules": [
+      {
+        "canonical_value": "United States",
+        "safe_keywords": [
+          "united states",
+          "usa"
+        ]
+      },
+      {
+        "canonical_value": "Mexico",
+        "safe_keywords": [
+          "mexico"
+        ]
+      }
+    ],
+    "allowed_values": [
+      "United States",
+      "Mexico"
+    ]
+  },
+  "player": {
+    "task_id": "test-player",
+    "write_mode": "add_only",
+    "keyword_rules": [
+      {
+        "canonical_value": "Messi",
+        "safe_keywords": [
+          "lionel messi",
+          "messi"
+        ]
+      },
+      {
+        "canonical_value": "Davies",
+        "safe_keywords": [
+          "alphonso davies"
+        ]
+      },
+      {
+        "canonical_value": "Martinez",
+        "safe_keywords": [
+          "lautaro martinez",
+          "lautaro martínez"
+        ]
+      },
+      {
+        "canonical_value": "Muller",
+        "safe_keywords": [
+          "muller",
+          "müller"
+        ]
+      },
+      {
+        "canonical_value": "TieA",
+        "safe_keywords": [
+          "zzzz"
+        ]
+      },
+      {
+        "canonical_value": "TieB",
+        "safe_keywords": [
+          "yyyy"
+        ]
+      }
+    ],
+    "allowed_values": [
+      "Messi",
+      "Davies",
+      "Martinez",
+      "Muller",
+      "TieA",
+      "TieB"
+    ]
+  },
+  "subcat": {
+    "task_id": "test-subcat",
+    "addon_eligible_subcats": [
+      "SubCat_Scarf",
+      "SubCat_Keychain"
+    ]
+  },
+  "normalize": {
+    "task_id": "test-normalize",
+    "vendor_map": {
+      "nike": "Nike",
+      "adidas": "adidas",
+      "soccerwearhouse.com": "Soccer Wearhouse",
+      "kwik goal": "Kwik Goal"
+    },
+    "blank_type_values": [
+      "Unclassified",
+      "Misc"
+    ]
+  }
+}

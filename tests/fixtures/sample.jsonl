@@ -1,0 +1,19 @@
+{"id": "gid://shopify/Product/1", "handle": "p1", "title": "Inter Miami CF Messi Home Jersey 2026", "vendor": "Nike", "productType": "Jerseys", "tags": [], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"key": "club_filter", "value": "Inter Miami CF", "__parentId": "gid://shopify/Product/1"}
+{"id": "gid://shopify/Product/2", "handle": "p2", "title": "Inter Miami Messi Away Jersey 2026", "vendor": "Nike", "productType": "Jerseys", "tags": [], "status": "ACTIVE", "createdAt": "2026-09-20T23:27:08Z", "updatedAt": "2026-09-20T23:27:08Z"}
+{"id": "gid://shopify/Product/3", "handle": "p3", "title": "Jordan Davies Wales Tee", "vendor": "Nike", "productType": "Jerseys", "tags": [], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"key": "country_filter", "value": "Wales", "__parentId": "gid://shopify/Product/3"}
+{"id": "gid://shopify/Product/4", "handle": "p4", "title": "Argentina Lautaro Mart\u00ednez Jersey", "vendor": "Kwik-Goal", "productType": "Jerseys", "tags": [], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"id": "gid://shopify/Product/5", "handle": "p5", "title": "Lyon Blue Soccer Cleats", "vendor": "Nike", "productType": "Footwear", "tags": [], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"id": "gid://shopify/Product/6", "handle": "p6", "title": "Legends zzzz yyyy Scarf", "vendor": "Nike", "productType": "Scarves", "tags": ["SubCat_Scarf"], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"id": "gid://shopify/Product/7", "handle": "p7", "title": "Charly Leon Home Jersey", "vendor": "Nike", "productType": "Jerseys", "tags": [], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"id": "gid://shopify/Product/8", "handle": "p8", "title": "Retro Bootleg Jersey", "vendor": "Nike", "productType": "Jerseys", "tags": ["SubCat_Keychain", "addon-eligible"], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"id": "gid://shopify/Product/9", "handle": "p9", "title": "Custom Nameset", "vendor": "Nike", "productType": "Accessories", "tags": ["SubCat_Accessory-Other", "addon-eligible"], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"id": "gid://shopify/Product/10", "handle": "p10", "title": "Draft Jersey", "vendor": "Nike", "productType": "Jerseys", "tags": [], "status": "DRAFT", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"id": "gid://shopify/Product/11", "handle": "p11", "title": "Tigres UANL Third Jersey", "vendor": "Nike", "productType": "Jerseys", "tags": [], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"key": "club_filter", "value": "Tigres UANL", "__parentId": "gid://shopify/Product/12"}
+{"id": "gid://shopify/Product/12", "handle": "p12", "title": "Tigres Home Jersey", "vendor": "NIKE", "productType": "Jerseys", "tags": [], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}
+{"key": "player_filter", "value": "Messi", "__parentId": "gid://shopify/Product/12"}
+{"key": "product_age", "value": "New", "__parentId": "gid://shopify/Product/12"}
+{"key": "sibling_products", "value": "gid1,gid2", "__parentId": "gid://shopify/Product/12"}
+{"id": "gid://shopify/Product/13", "handle": "p13", "title": "Plain Training Top", "vendor": "soccerwearhouse.com", "productType": "Misc", "tags": ["group_x"], "status": "ACTIVE", "createdAt": "2026-01-05T10:00:00Z", "updatedAt": "2026-01-05T10:00:00Z"}

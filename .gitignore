@@ -1,0 +1,7 @@
+.env
+output/
+__pycache__/
+*.pyc
+task-exports/*.json
+task-exports/*.txt
+!task-exports/README.txt
