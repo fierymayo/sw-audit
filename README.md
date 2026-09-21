@@ -71,6 +71,8 @@ Per-run reports land in `output/audit-<stamp>/` (one folder per run, stamped UTC
 | `addon-stale-tag-*.csv` | `addon-eligible` present but SubCat not in the 29-list (persists by design; review only) |
 | `vendor-audit-*.csv` | NOT_NORMALIZED / CASING_ALIAS_CANDIDATE / NEW_VENDOR_CANDIDATE vendor findings |
 | `no-rule-candidates-*.csv` | Heuristic frequent unknown title tokens — human review, never authoritative |
+| `entity-evidence-*.csv`                   | Ranked new-entity candidates merged from four signals (no-rule values, filled orphans, title tokens, rule-less collections); roster decisions stay human |
+| `surname-buckets-*.csv`                   | KEYWORD_GAP player surnames split by club/country context with first-name candidates — evidence for the surname design question |
 | `config-lint-*.csv` | Rule/allowed-value drift in the tasks themselves |
 | `collections-health-*.csv` | RULE_LOST / COUNT_DROP / ZERO_WITH_RULE / MULTI_SOURCE / UNKNOWN_RULE_VALUE |
 | `collections-candidates-*.csv` | Manual collections classified AUTOMATABLE / REVIEW / KEEP_MANUAL with a suggested additive rule |

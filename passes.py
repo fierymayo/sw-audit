@@ -407,7 +407,8 @@ EVIDENCE_ROW_FIELDS = ["entity", "evidence", "products", "collection_count", "fi
 EVIDENCE_GENERIC_WORDS = {"soccer", "custom", "printed", "only", "kids", "youth", "mens", "womens",
                           "official", "premium", "recommend", "frontpage", "legends", "collectibles",
                           "medical", "referee", "running", "excluded", "promotions", "discounts",
-                          "goalkeeper", "training", "indoor", "turf", "futsal", "compression"}
+                          "goalkeeper", "training", "indoor", "turf", "futsal", "compression",
+                          "misc", "name", "number", "sets", "mugs", "pint", "glasses"}
 SURNAME_BUCKET_FIELDS = ["surname", "surname_blanks", "context_type", "context_value",
                          "count", "preceding_words", "sample_title"]
 
@@ -453,6 +454,19 @@ def pass_entity_evidence(blanks, filled_check, no_rule_tokens, cfg, collections_
         stop = set(ca.TYPE_WORDS) | set(ca.COLOURS) | set(ca.FOOTWEAR_WORDS) | EVIDENCE_GENERIC_WORDS
         for v in vendors:
             stop.update(v.split())
+        compiled_all = []
+        canon_phrases = set()
+        for _, h in FILTER_HANDLES:
+            entry = (cfg or {}).get(h) or {}
+            comp = entry.get("_compiled")
+            if comp:
+                compiled_all.append(comp)
+            for v in entry.get("_canonicals", set()):
+                nv = normalize(v)
+                if h == "club":
+                    nv = strip_fc(nv)
+                if len(nv) >= 4:
+                    canon_phrases.add(nv)
         for c in ca.load_collections(collections_path):
             if c["has_rule"] or c["count"] == 0:
                 continue
@@ -464,6 +478,11 @@ def pass_entity_evidence(blanks, filled_check, no_rule_tokens, cfg, collections_
                 continue
             if any(t in stop for t in n.split()):
                 continue  # type/colour/generic-shaped title, not an entity
+            if any(match_title(core, comp) != (None, False) for comp in compiled_all):
+                continue  # rostered entity under another spelling (matcher reaches it)
+            padded = " " + n + " "
+            if any(phrase_in(padded, cp) for cp in canon_phrases):
+                continue  # rostered canonical contained in the title (keyword-gap spelling)
             add(n, core, "collection", c["count"], c["title"], kind="collection")
 
     rows = []
