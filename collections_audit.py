@@ -280,6 +280,18 @@ def _classify_candidate(c, cfg, products_ctx):
     real = [(h, v) for h, v in matches if v]
     if len(real) == 1 and len(matches) == 1:
         handle, value = real[0]
+        residue = f" {core_norm} "
+        for r_ in ((cfg or {}).get(handle) or {}).get("keyword_rules") or []:
+            if (r_.get("canonical_value") or "").strip() == value:
+                for kw in r_.get("safe_keywords") or []:
+                    residue = residue.replace(f" {normalize(kw)} ", " ")
+        fillers = {"fc", "cf", "afc", "sc", "club", "de", "the", "soccer"}
+        leftover = [t for t in residue.split()
+                    if t not in fillers and not t.isdigit() and t not in TYPE_WORDS
+                    and t not in COLOURS]
+        if leftover:
+            return _review(c, f"partial entity match ('{value}') \u2014 unexplained words: "
+                              f"{' '.join(leftover)}"), None
         filter_key = f"{handle}_filter"
         type_word = next((t for w, t in TYPE_WORDS.items()
                           if f" {w} " in f" {title_l} ".replace("-", " ")), None)
@@ -305,8 +317,8 @@ def _classify_candidate(c, cfg, products_ctx):
             if total and c["count"] >= 0.5 * total:
                 rule = {"kind": "whole_type", "type": whole}
                 return ("AUTOMATABLE", "Product type",
-                        f"Product type equals '{whole}' ({c['count']} of {total} active "
-                        f"{whole} products already here)", ""), rule
+                        f"Product type equals '{whole}' (collection holds {c['count']}; "
+                        f"store has {total} active {whole} products)", ""), rule
             if total:
                 return _review(c, f"type-named but only {c['count']} of {total} active "
                                   f"{whole} products \u2014 curated subset"), None
