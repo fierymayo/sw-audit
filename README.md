@@ -41,8 +41,9 @@ python collections_audit.py            # collections health + automation candida
 python collections_audit.py --cached
 python ui.py                   # Tkinter front-end (same actions as buttons)
 python -m unittest discover tests
-python collections_audit.py --members       #also pull membership; compute Adds / Count After
+python collections_audit.py --members --deliverable   # + merchant XLSX and PDF
 python collections_audit.py --members --deliverable   + merchant XLSX and PDF
+
 ```
 
 ## Keeping task-configs.json fresh
@@ -55,7 +56,9 @@ The audit's reason codes are only facts if its rules match the live Mechanic tas
 
 Every report prints the config file date; treat stale-dated runs with suspicion.
 
-## Outputs (`output/`, timestamped)
+## Outputs
+
+Per-run reports land in `output/audit-<stamp>/` (one folder per run, stamped UTC+5). Caches (`catalog-*.jsonl`), `collections-baseline.json`, the token cache, and the daily `catalog-snapshot-*.md` chain stay in `output/` root.
 
 | File | What it is |
 |---|---|

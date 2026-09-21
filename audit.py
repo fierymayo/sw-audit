@@ -66,7 +66,7 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
     products = load_products(config.CACHE_PRODUCTS_JSONL)
     log(f"  {len(products):,} products")
 
-    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    stamp = config.now().strftime("%Y%m%d-%H%M")
     log("Running audits...")
 
     blanks = pass_filter_blanks(products, cfg, lag_hours=lag_hours)
@@ -160,7 +160,7 @@ def forecast(rules_path, handle, cached=False, force=False, log=print):
     log(f"Rules dated {cfg['_meta']['file_date']}, catalog cache dated {cache_date}.")
 
     out = pass_forecast(load_products(config.CACHE_PRODUCTS_JSONL), cfg, handle, new_rules)
-    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    stamp = config.now().strftime("%Y%m%d-%H%M")
     path = report.write_rows_csv(os.path.join(config.run_dir(stamp), f"forecast-{handle}-{stamp}.csv"),
                                  out["rows"], FORECAST_ROW_FIELDS)
     log(f"  wrote {path}  ({len(out['rows'])} rows)")

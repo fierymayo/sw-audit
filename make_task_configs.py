@@ -13,6 +13,8 @@ import os
 import re
 import sys
 
+import config
+
 TASK_HANDLES = {
     "488c5217-2146-40a9-a7d5-046ef9ddaca0": "club",
     "6eafda0f-6e44-496e-bb27-d84344967a49": "country",
@@ -87,7 +89,7 @@ def parse_normalize_task(task):
 
 
 def build(paths, out_path=OUT_PATH):
-    cfg = {"_meta": {"generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
+    cfg = {"_meta": {"generated_at": config.now().isoformat(timespec="seconds"),
                      "sources": []}}
     for path in paths:
         with open(path, encoding="utf-8") as fh:

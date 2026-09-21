@@ -221,7 +221,7 @@ def pass_fill_rates(products, cfg=None, prev=None, prev_name=None):
         blankish = {v.strip().lower() for v in nrm["blank_type_values"]}
 
     summary = {
-        "generated_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "generated_at": config.now().isoformat(timespec="seconds"),
         "rules_file_date": ((cfg or {}).get("_meta") or {}).get("file_date", "NONE"),
         "total": total,
         "active": a,

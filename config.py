@@ -1,3 +1,4 @@
+import datetime
 import os
 
 try:
@@ -21,6 +22,11 @@ CACHE_COLLECTIONS_JSONL = os.path.join(OUT_DIR, "catalog-collections.jsonl")
 COLLECTIONS_BASELINE = os.path.join(OUT_DIR, "collections-baseline.json")
 CACHE_COLLECTIONS_MEMBERS = os.path.join(OUT_DIR, "catalog-collections-members.jsonl")
 TOKEN_CACHE = os.path.join(OUT_DIR, ".token.json")
+
+STAMP_TZ = datetime.timezone(datetime.timedelta(hours=int(os.getenv("STAMP_UTC_OFFSET_HOURS", "5"))))
+
+def now():
+    return datetime.datetime.now(STAMP_TZ)
 
 TASK_CONFIGS = os.environ.get("TASK_CONFIGS", "task-configs.json")
 SYNC_LAG_HOURS = int(os.environ.get("SYNC_LAG_HOURS", "48"))

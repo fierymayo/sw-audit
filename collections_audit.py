@@ -132,7 +132,7 @@ def load_baseline():
 def save_baseline(collections, log=print):
     os.makedirs(config.OUT_DIR, exist_ok=True)
     data = {
-        "saved_at": datetime.datetime.now().isoformat(timespec="seconds"),
+        "saved_at": config.now().isoformat(timespec="seconds"),
         "collections": {c["gid"]: {"title": c["title"], "count": c["count"], "has_rule": c["has_rule"]}
                         for c in collections},
     }
@@ -394,7 +394,7 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, l
                 "(run with --members, without --cached, to pull it).")
     products_ctx = load_products_ctx(log=log)
 
-    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    stamp = config.now().strftime("%Y%m%d-%H%M")
     health = health_check(collections, baseline, cfg)
     if health:
         report.write_rows_csv(os.path.join(config.run_dir(stamp), f"collections-health-{stamp}.csv"),
