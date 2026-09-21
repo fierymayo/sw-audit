@@ -87,6 +87,8 @@ def main():
     add_button("Run Product Audit", lambda: launch("Product audit (fetch + scan)", audit.pipeline))
     add_button("Rescan Cached", lambda: launch("Product audit (cached)", audit.pipeline, cached=True))
     add_button("Collections Audit", lambda: launch("Collections audit", collections_audit.pipeline))
+    add_button("Collections + Members", lambda: launch("Collections (members + Adds)", collections_audit.pipeline, members_pull=True, deliverable=True))
+    add_button("Collections XLSX (cached)", lambda: launch("Collections deliverable (cached)", collections_audit.pipeline, cached=True, deliverable=True))
     add_button("Config Lint", lambda: launch("Config lint", audit.pipeline, lint_only=True))
     add_button("PDF (cached scan)", lambda: launch("Cached scan + PDF", audit.pipeline, cached=True, pdf=True))
 

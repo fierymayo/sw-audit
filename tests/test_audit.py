@@ -529,5 +529,70 @@ class TestDeliverable(unittest.TestCase):
         self.assertEqual(ws.cell(row=2, column=1).number_format, "@")
         self.assertEqual(ws.cell(row=2, column=1).value, "151515151515")
         self.assertEqual(wb["Needs Review"].max_row, 2)
+
+
+class TestEntityEvidence(unittest.TestCase):
+    def test_merge_exclusion_and_ranking(self):
+        from passes import pass_entity_evidence
+        cfg = _sim_cfg()
+        blanks = {"club_filter": [{"reason": "NO_RULE_VALUE", "matched_value": "Tigres UANL",
+                                   "title": "Tigres UANL Home Jersey"}]}
+        filled = {"orphans": {"club_filter": {"Tigres UANL": 20, "No Club": 5}}}
+        tokens = [{"token": "Zzzonly", "count": 7, "sample_title": "Zzzonly Tee"}]
+        colls = [{"id": "gid://shopify/Collection/1", "title": "Leicester City", "handle": "lc",
+                  "productsCount": {"count": 6}, "sources": []},
+                 {"id": "gid://shopify/Collection/2", "title": "Real Madrid Jerseys", "handle": "rm",
+                  "productsCount": {"count": 500}, "sources": []},
+                 {"id": "gid://shopify/Collection/3", "title": "World Cup 2026", "handle": "wc",
+                  "productsCount": {"count": 30}, "sources": []}]
+        import tempfile
+        with tempfile.NamedTemporaryFile("w", suffix=".jsonl", delete=False, encoding="utf-8") as fh:
+            for c in colls:
+                fh.write(json.dumps(c) + "\n")
+            path = fh.name
+        try:
+            rows = pass_entity_evidence(blanks, filled, tokens, cfg, collections_path=path)
+        finally:
+            os.unlink(path)
+        self.assertEqual(rows[0]["entity"], "Tigres UANL")
+        self.assertEqual(rows[0]["products"], 21)
+        lc = next(r for r in rows if r["entity"] == "Leicester City")
+        self.assertEqual((lc["products"], lc["collection_count"]), (0, 6))
+        self.assertGreater([r["entity"] for r in rows].index("Leicester City"),
+                           [r["entity"] for r in rows].index("No Club"))
+        names = {r["entity"] for r in rows}
+        self.assertIn("Leicester City", names)
+        self.assertIn("No Club", names)
+        self.assertNotIn("Zzzonly", names)
+        self.assertFalse(any("Real Madrid" in n for n in names))
+        self.assertFalse(any("World Cup" in n for n in names))
+
+
+class TestSurnameBuckets(unittest.TestCase):
+    def test_contexts_and_preceding_words(self):
+        from passes import pass_surname_buckets
+        cfg = _sim_cfg()
+        prods = [{"handle": "h1", "club_filter": "Inter Miami CF", "country_filter": ""},
+                 {"handle": "h2", "club_filter": "", "country_filter": "Argentina"},
+                 {"handle": "h3", "club_filter": "", "country_filter": ""}]
+        blanks = {"player_filter": [
+            {"reason": "KEYWORD_GAP", "matched_value": "Martinez", "handle": "h1",
+             "title": "adidas Josef Martinez Jersey"},
+            {"reason": "KEYWORD_GAP", "matched_value": "Martinez", "handle": "h2",
+             "title": "Lisandro Martinez Argentina Tee"},
+            {"reason": "KEYWORD_GAP", "matched_value": "Martinez", "handle": "h3",
+             "title": "Nike Martinez Scarf"},
+        ]}
+        rows = pass_surname_buckets(blanks, prods, cfg)
+        m = [r for r in rows if r["surname"] == "Martinez"]
+        self.assertEqual(len(m), 3)
+        self.assertEqual(m[0]["surname_blanks"], 3)
+        club = next(r for r in m if r["context_type"] == "club")
+        self.assertEqual(club["context_value"], "Inter Miami CF")
+        self.assertIn("josef", club["preceding_words"])
+        none_row = next(r for r in m if r["context_type"] == "none")
+        self.assertEqual(none_row["preceding_words"], "")
+
+
 if __name__ == "__main__":
     unittest.main()

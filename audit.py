@@ -24,7 +24,8 @@ import report
 from catalog import FILTERS, PRODUCTS_BULK_QUERY, load_products
 from passes import (FORECAST_ROW_FIELDS, blanks_reason_counts, pass_addon_coverage,
                     pass_filled_check, pass_filter_blanks, pass_fill_rates, pass_forecast,
-                    pass_no_rule_candidates, pass_vendor_audit)
+                    pass_no_rule_candidates, pass_vendor_audit, EVIDENCE_ROW_FIELDS,
+                    SURNAME_BUCKET_FIELDS, pass_entity_evidence, pass_surname_buckets)
 from rules import FILTER_HANDLES, config_lint, load_task_rules
 from subcat_sim import SIM_ROW_FIELDS, pass_subcat_sim
 from shopify_client import ShopifyBulk, get_admin_token
@@ -131,6 +132,18 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         report.write_rows_csv(os.path.join(config.run_dir(stamp), f"no-rule-candidates-{stamp}.csv"),
                               candidates, ["token", "count", "sample_title"])
         log(f"  no-rule candidates (heuristic, human review): {len(candidates)} tokens")
+
+    evidence = pass_entity_evidence(blanks, filled, candidates, cfg,
+                                    collections_path=config.CACHE_COLLECTIONS_JSONL)
+    if evidence:
+        report.write_rows_csv(os.path.join(config.run_dir(stamp), f"entity-evidence-{stamp}.csv"),
+                              evidence, EVIDENCE_ROW_FIELDS)
+        log(f"  entity evidence: {len(evidence)} candidate entities")
+    buckets = pass_surname_buckets(blanks, products, cfg)
+    if buckets:
+        report.write_rows_csv(os.path.join(config.run_dir(stamp), f"surname-buckets-{stamp}.csv"),
+                              buckets, SURNAME_BUCKET_FIELDS)
+        log(f"  surname buckets: {len(set(r['surname'] for r in buckets))} surnames, {len(buckets)} context rows")
 
     report.write_lint(stamp, findings, log=log)
     if pdf:

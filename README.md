@@ -41,8 +41,8 @@ python collections_audit.py            # collections health + automation candida
 python collections_audit.py --cached
 python ui.py                   # Tkinter front-end (same actions as buttons)
 python -m unittest discover tests
+python collections_audit.py --members       #also pull membership; compute Adds / Count After
 python collections_audit.py --members --deliverable   # + merchant XLSX and PDF
-python collections_audit.py --members --deliverable   + merchant XLSX and PDF
 
 ```
 

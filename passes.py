@@ -1,4 +1,6 @@
 import datetime
+import json
+import os
 import re
 from collections import Counter, defaultdict
 
@@ -399,3 +401,125 @@ def pass_no_rule_candidates(products, cfg, top=40):
             hits[key] += 1
             samples.setdefault(key, p["title"])
     return [{"token": t, "count": n, "sample_title": samples[t]} for t, n in hits.most_common(top)]
+
+
+EVIDENCE_ROW_FIELDS = ["entity", "evidence", "products", "collection_count", "filters", "sample_title"]
+EVIDENCE_GENERIC_WORDS = {"soccer", "custom", "printed", "only", "kids", "youth", "mens", "womens",
+                          "official", "premium", "recommend", "frontpage", "legends", "collectibles",
+                          "medical", "referee", "running", "excluded", "promotions", "discounts",
+                          "goalkeeper", "training", "indoor", "turf", "futsal", "compression"}
+SURNAME_BUCKET_FIELDS = ["surname", "surname_blanks", "context_type", "context_value",
+                         "count", "preceding_words", "sample_title"]
+
+
+def pass_entity_evidence(blanks, filled_check, no_rule_tokens, cfg, collections_path=None):
+    """Aggregates the four new-entity signals into one ranked table. Compute only —
+    it surfaces candidates with evidence; roster decisions stay human."""
+    evidence = {}
+
+    def add(norm, display, source, n, sample="", f="", kind="product"):
+        if not norm:
+            return
+        e = evidence.setdefault(norm, {"display": display, "sources": Counter(),
+                                       "products": 0, "collection_count": 0,
+                                       "sample": "", "filters": set()})
+        e["sources"][source] += n
+        if kind == "collection":
+            e["collection_count"] += n
+        else:
+            e["products"] += n
+        if sample and not e["sample"]:
+            e["sample"] = sample
+        if f:
+            e["filters"].add(f.replace("_filter", ""))
+
+    for filter_key, rows in (blanks or {}).items():
+        for r in rows:
+            if r["reason"] == "NO_RULE_VALUE":
+                add(normalize(r["matched_value"]), r["matched_value"], "no_rule_value", 1,
+                    r["title"], filter_key)
+    for filter_key, counts in ((filled_check or {}).get("orphans") or {}).items():
+        for value, n in counts.items():
+            add(normalize(value), value, "filled_orphan", n, "", filter_key)
+    for row in no_rule_tokens or []:
+        add(normalize(row["token"]), row["token"], "title_token", row["count"], row["sample_title"])
+
+    if collections_path and os.path.exists(collections_path):
+        import collections_audit as ca
+        canonicals = set()
+        for handle in ("club", "country", "player", "tournament"):
+            canonicals |= {normalize(v) for v in ((cfg or {}).get(handle) or {}).get("_canonicals", set())}
+        vendors = {normalize(v) for v in ((cfg or {}).get("normalize") or {}).get("vendor_map", {}).values()}
+        stop = set(ca.TYPE_WORDS) | set(ca.COLOURS) | set(ca.FOOTWEAR_WORDS) | EVIDENCE_GENERIC_WORDS
+        for v in vendors:
+            stop.update(v.split())
+        for c in ca.load_collections(collections_path):
+            if c["has_rule"] or c["count"] == 0:
+                continue
+            if any(k in c["title"].lower() for k in ca.KEEP_MANUAL):
+                continue
+            core, _broad = ca._strip_suffix(c["title"])
+            n = normalize(core)
+            if not n or n in canonicals or n in vendors:
+                continue
+            if any(t in stop for t in n.split()):
+                continue  # type/colour/generic-shaped title, not an entity
+            add(n, core, "collection", c["count"], c["title"], kind="collection")
+
+    rows = []
+    for e in evidence.values():
+        if len(e["sources"]) == 1 and e["sources"].get("title_token"):
+            continue  # bare token noise needs a second signal
+        rows.append({"entity": e["display"],
+                     "evidence": "|".join(f"{s}\u00d7{n}" for s, n in e["sources"].most_common()),
+                     "products": e["products"],
+                     "collection_count": e["collection_count"],
+                     "filters": "|".join(sorted(e["filters"])),
+                     "sample_title": e["sample"]})
+    rows.sort(key=lambda r: (-r["products"], -r["collection_count"]))
+    return rows
+
+
+def pass_surname_buckets(blanks, products, cfg):
+    """Long-format context split for KEYWORD_GAP player surnames: which clubs/countries
+    and preceding title words (first-name candidates) co-occur. Data for the parked
+    surname-bucket design question; suggests nothing."""
+    by_handle = {p["handle"]: p for p in products}
+    groups = defaultdict(list)
+    for r in (blanks or {}).get("player_filter", []):
+        if r["reason"] == "KEYWORD_GAP":
+            groups[r["matched_value"]].append(r)
+    if not groups:
+        return []
+    vendors = {normalize(v) for v in ((cfg or {}).get("normalize") or {}).get("vendor_map", {}).values()}
+    vendor_words = set()
+    for v in vendors:
+        vendor_words.update(v.split())
+    rows = []
+    for surname, rs in groups.items():
+        s_norm = normalize(surname)
+        buckets, samples, preceding = Counter(), {}, defaultdict(Counter)
+        for r in rs:
+            p = by_handle.get(r["handle"]) or {}
+            if p.get("club_filter"):
+                key = ("club", p["club_filter"])
+            elif p.get("country_filter"):
+                key = ("country", p["country_filter"])
+            else:
+                key = ("none", "")
+            buckets[key] += 1
+            samples.setdefault(key, r["title"])
+            toks = normalize(r["title"]).split()
+            if s_norm in toks:
+                i = toks.index(s_norm)
+                w = toks[i - 1] if i > 0 else ""
+                if w and w.isalpha() and len(w) > 2 and w not in vendor_words:
+                    preceding[key][w] += 1
+        for key, n in buckets.most_common():
+            ct, cv = key
+            rows.append({"surname": surname, "surname_blanks": len(rs),
+                         "context_type": ct, "context_value": cv, "count": n,
+                         "preceding_words": "|".join(f"{w}\u00d7{c}" for w, c in preceding[key].most_common(3)),
+                         "sample_title": samples[key]})
+    rows.sort(key=lambda r: (-r["surname_blanks"], r["surname"], -r["count"]))
+    return rows
