@@ -70,7 +70,7 @@ Every report prints the config file date; treat stale-dated runs with suspicion.
 | `collections-health-*.csv` | RULE_LOST / COUNT_DROP / ZERO_WITH_RULE / MULTI_SOURCE / UNKNOWN_RULE_VALUE |
 | `collections-candidates-*.csv` | Manual collections classified AUTOMATABLE / REVIEW / KEEP_MANUAL with a suggested additive rule |
 | `audit-report-*.pdf` | Merchant-facing summary (`--pdf`, needs reportlab) |
-
+| `subcat-sim-*.csv` | Predicted vs actual SubCat tags (task-logic simulation): MISSING_SUBCAT / WILL_REPLACE / UNPREDICTED_EXISTING, with eligibility columns |
 ## Reason codes (blanks CSVs)
 
 | Code | Meaning | Action |

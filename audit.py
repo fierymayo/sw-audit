@@ -26,6 +26,7 @@ from passes import (FORECAST_ROW_FIELDS, blanks_reason_counts, pass_addon_covera
                     pass_filled_check, pass_filter_blanks, pass_fill_rates, pass_forecast,
                     pass_no_rule_candidates, pass_vendor_audit)
 from rules import FILTER_HANDLES, config_lint, load_task_rules
+from subcat_sim import SIM_ROW_FIELDS, pass_subcat_sim
 from shopify_client import ShopifyBulk, get_admin_token
 
 
@@ -115,6 +116,15 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         report.write_rows_csv(os.path.join(config.OUT_DIR, f"vendor-audit-{stamp}.csv"),
                               vendors["rows"], ["vendor", "count", "finding", "suggested"])
     log(f"  vendors: {vendors['distinct_vendors_active']} distinct, {len(vendors['rows'])} finding(s)")
+
+    sim = pass_subcat_sim(products, cfg)
+    if sim:
+        if sim["rows"]:
+            report.write_rows_csv(os.path.join(config.OUT_DIR, f"subcat-sim-{stamp}.csv"),
+                                  sim["rows"], SIM_ROW_FIELDS)
+        log("  subcat sim: " + ("  ".join(f"{f}={n}" for f, n in sorted(sim["counts"].items())) or "clean"))
+    else:
+        log("  subcat sim skipped (no subcat map in config).")
 
     candidates = pass_no_rule_candidates(products, cfg)
     if candidates:

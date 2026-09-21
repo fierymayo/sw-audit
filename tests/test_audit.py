@@ -15,7 +15,9 @@ from matcher import compile_rules, match_title, normalize, strip_fc
 from passes import (pass_addon_coverage, pass_filled_check, pass_fill_rates, pass_filter_blanks,
                     pass_forecast, pass_vendor_audit)
 from rules import config_lint, load_task_rules
+from subcat_sim import classification_type, classify, pass_subcat_sim
 
+_SIM_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
 NOW = datetime.datetime(2026, 9, 21, 7, 0, tzinfo=datetime.timezone.utc)
 
@@ -279,5 +281,103 @@ class TestGenerator(unittest.TestCase):
             self.assertTrue(os.path.exists(out))
 
 
+
+def _sim_cfg():
+    cfg = load_task_rules(os.path.join(_SIM_REPO, "task-configs.json"))
+    if not cfg or not (cfg.get("subcat") or {}).get("product_type_map"):
+        raise unittest.SkipTest("real task-configs.json with subcat map required")
+    return cfg
+
+
+def _sim_p(n, title, ptype, tags, status="ACTIVE"):
+    return {"handle": f"s{n}", "id": str(n), "title": title, "type": ptype,
+            "tags": tags, "_tags_lc": [t.lower() for t in tags], "status": status}
+
+
+class TestSubcatClassify(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cfg = _sim_cfg()
+        cls.tmap = cls.cfg["subcat"]["product_type_map"]
+
+    def ct(self, ptype):
+        return classification_type(ptype, self.tmap)
+
+    def test_type_mapping(self):
+        self.assertEqual(self.ct("shoes"), "Footwear")
+        self.assertEqual(self.ct("HATS"), "Hats")
+        self.assertEqual(self.ct("unclassified"), "Misc")
+        self.assertEqual(self.ct("Jerseys"), "Jerseys")
+
+    def test_pre_wrap_asymmetry(self):
+        title = "Mueller Pre Wrap Big Roll (Blue)"
+        self.assertEqual(classify(title, self.ct("Accessories")), "SubCat_Accessory-Other")
+        self.assertEqual(classify(title, self.ct("Misc")), "SubCat_Sock-Tape")
+
+    def test_substring_not_word_boundary(self):
+        self.assertEqual(classify("Nike Snapback Hat", "Hats"), "SubCat_Hat-Snapback")
+        self.assertEqual(classify("Nike Gripknit Socks", "Socks"), "SubCat_Grip-Socks")
+
+    def test_gk_uses_title_words(self):
+        self.assertEqual(classify("Reusch GK-Shorts Pro", "Shorts"), "SubCat_GK-Shorts")
+        self.assertIsNone(classify("Reusch GKX Shorts", "Shorts"))
+        self.assertIsNone(classify("Nike Running Shorts", "Shorts"))
+
+    def test_accessories_exclusions(self):
+        self.assertIsNone(classify("Mexico Flag", "Accessories"))
+        self.assertIsNone(classify("Vizari Referee Wallet", "Accessories"))
+        self.assertEqual(classify("Chelsea Air Freshener", "Air Freshener"), "SubCat_Air-Freshener")
+
+    def test_guarded_branches(self):
+        self.assertIsNone(classify("New Era Tape Logo Cap", "Accessories"))
+        self.assertIsNone(classify("Jordan Jumpman Pump Hat", "Accessories"))
+        self.assertEqual(classify("Nike Essential Ball Pump", "Misc"), "SubCat_Ball-Pump")
+
+    def test_misc_no_fallback(self):
+        self.assertIsNone(classify("Random Novelty Item", "Misc"))
+
+    def test_footwear_slides_only(self):
+        self.assertEqual(classify("adidas Adilette Slides", "Footwear"), "SubCat_Slides")
+        self.assertIsNone(classify("adidas Predator FG Cleats", "Footwear"))
+
+
+class TestSubcatPass(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.cfg = _sim_cfg()
+
+    def run_pass(self, products):
+        return pass_subcat_sim(products, self.cfg)
+
+    def test_findings(self):
+        out = self.run_pass([
+            _sim_p(1, "FC Barcelona Scarf", "Scarves", []),
+            _sim_p(2, "Chelsea Poster", "Posters", ["SubCat_Scarf"]),
+            _sim_p(3, "Liverpool Scarf", "Scarves", ["SubCat_Scarf"]),
+            _sim_p(4, "Arsenal Jersey", "Jerseys", ["SubCat_Collectible"]),
+            _sim_p(5, "Multi Tag Scarf", "Scarves", ["SubCat_Scarf", "SubCat_Poster"]),
+            _sim_p(6, "Draft Scarf", "Scarves", [], status="DRAFT"),
+        ])
+        by = {r["handle"]: r["finding"] for r in out["rows"]}
+        self.assertEqual(by, {"s1": "MISSING_SUBCAT", "s2": "WILL_REPLACE",
+                              "s4": "UNPREDICTED_EXISTING", "s5": "WILL_REPLACE"})
+        self.assertEqual(out["counts"], {"MISSING_SUBCAT": 1, "WILL_REPLACE": 2,
+                                         "UNPREDICTED_EXISTING": 1})
+
+    def test_eligibility_columns(self):
+        out = self.run_pass([_sim_p(7, "Inter Miami Scarf", "Scarves", ["SubCat_Bag-Other"])])
+        row = out["rows"][0]
+        self.assertTrue(row["predicted_eligible"])
+        self.assertFalse(row["currently_eligible"])
+        self.assertFalse(row["has_addon_tag"])
+
+    def test_pre_wrap_pair_through_pass(self):
+        out = self.run_pass([
+            _sim_p(8, "Mueller Pre Wrap Big Roll", "Accessories", []),
+            _sim_p(9, "Mueller Pre Wrap Big Roll", "Misc", []),
+        ])
+        pred = {r["handle"]: (r["predicted"], r["predicted_eligible"]) for r in out["rows"]}
+        self.assertEqual(pred["s8"], ("SubCat_Accessory-Other", False))
+        self.assertEqual(pred["s9"], ("SubCat_Sock-Tape", True))
 if __name__ == "__main__":
     unittest.main()
