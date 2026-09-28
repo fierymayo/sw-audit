@@ -1,0 +1,37 @@
+[
+  {
+    "canonical_value": "USMNT",
+    "safe_keywords": [
+      "usmnt"
+    ]
+  },
+  {
+    "canonical_value": "Nashville SC",
+    "safe_keywords": [
+      "nashville"
+    ]
+  },
+  {
+    "canonical_value": "Charlotte FC",
+    "safe_keywords": [
+      "charlotte"
+    ]
+  },
+  {
+    "canonical_value": "San Diego FC",
+    "safe_keywords": [
+      "san diego"
+    ]
+  },
+  {
+    "canonical_value": "Leon FC",
+    "safe_keywords": [
+      "charly leon",
+      "charley leon",
+      "duty leon",
+      "leon third jersey",
+      "leon away jersey",
+      "leon home jersey"
+    ]
+  }
+]

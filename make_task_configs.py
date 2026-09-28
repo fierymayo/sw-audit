@@ -92,8 +92,12 @@ def build(paths, out_path=OUT_PATH):
     cfg = {"_meta": {"generated_at": config.now().isoformat(timespec="seconds"),
                      "sources": []}}
     for path in paths:
-        with open(path, encoding="utf-8") as fh:
-            task = json.load(fh)
+        try:
+            with open(path, encoding="utf-8-sig") as fh:
+                task = json.load(fh)
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            print(f"  skipped {os.path.basename(path)} — not valid JSON")
+            continue
         handle = TASK_HANDLES.get(task.get("id", ""))
         if not handle:
             print(f"  skipped {os.path.basename(path)} — unknown task id {task.get('id')}")
