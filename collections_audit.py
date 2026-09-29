@@ -130,7 +130,7 @@ def load_baseline():
 
 
 def save_baseline(collections, log=print):
-    os.makedirs(config.OUT_DIR, exist_ok=True)
+    os.makedirs(os.path.dirname(config.COLLECTIONS_BASELINE) or ".", exist_ok=True)
     data = {
         "saved_at": config.now().isoformat(timespec="seconds"),
         "collections": {c["gid"]: {"title": c["title"], "count": c["count"], "has_rule": c["has_rule"]}

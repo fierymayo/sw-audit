@@ -25,7 +25,7 @@ chat) decide. That division is a locked decision, not a current limitation.
 task-exports/*.json ─► make_task_configs.py ─► task-configs.json ─► rules.py (load + lint)
                                                                         │ compiled rules
 Shopify Admin GraphQL (2026-07)                                         ▼
-  └─ bulk ops ─► shopify_client.py ─► output/catalog-*.jsonl ─► catalog.py / loaders
+  └─ bulk ops ─► shopify_client.py ─► output/caches/catalog-*.jsonl ─► catalog.py / loaders
                                                                         │ product dicts
                        ┌────────────────────────────────────────────────┤
                        ▼                                                ▼
@@ -34,7 +34,7 @@ Shopify Admin GraphQL (2026-07)                                         ▼
                 ▼                                          ▼
               report.py (CSV/JSON/MD/PDF writers)        deliverable.py (XLSX/PDF)
                        │                                        │
-                       └────────► output/audit-<stamp>/ ◄───────┘
+                       └────────► output/runs/audit-<stamp>/ ◄──┘
 ```
 
 Module one-liners:
@@ -75,7 +75,7 @@ Token resolution order (get_admin_token):
 1. `ADMIN_TOKEN` in .env — always wins. This is the current production setup (permanent
    token minted once via `python get_token.py` authorization-code flow).
 2. Else `CLIENT_ID` + `CLIENT_SECRET` — mints a 24h token per day via the client
-   credentials grant, cached at `output/.token.json`. Fails with `shop_not_permitted`
+   credentials grant, cached at `output/caches/.token.json`. Fails with `shop_not_permitted`
    when app and store are in different Dev Dashboard orgs (that's why we use #1).
 
 Scope is `read_products` (plus harmless extra read scopes on the released app version).
@@ -131,9 +131,9 @@ Task rules loaded from task-configs.json (dated 2026-09-21).   <- ground-truth f
 Kicking off products bulk operation...
   bulk op started: gid://shopify/BulkOperation/...              <- OUR op id; polled by id only
   bulk op: RUNNING  objects=36322                               <- Shopify-side progress
-  downloaded output/catalog-products.jsonl                      <- cache refreshed
+  downloaded output/caches/catalog-products.jsonl               <- cache refreshed
   21,871 products
-  wrote output/audit-<stamp>/blanks-club_filter-....csv  (38 rows)
+  wrote output/runs/audit-<stamp>/blanks-club_filter-....csv  (38 rows)
   club_filter: KEYWORD_GAP=34  NO_RULE_VALUE=4                  <- reason mix per filter (README table)
   club_filter filled-check: FILLED_DIVERGENT=12  FILLED_ORPHAN=27
   active=18,600  club=64.5%  country=17.9%  player=23.6%  tournament=10.8%
@@ -153,20 +153,34 @@ blanks-country line, SYNC_MISS anywhere, or addon missing>0 are the "look now" s
 
 ```
 output/
-  catalog-products.jsonl              <- cache (overwritten each fetch)
-  catalog-collections.jsonl           <- cache
-  catalog-collections-members.jsonl   <- cache (only --members runs refresh it)
-  collections-baseline.json           <- drift reference for RULE_LOST / COUNT_DROP
-  catalog-snapshot-YYYY-MM-DD.md      <- doc chain, one per day, same-day reruns overwrite
-  fill-rate-summary-*.json            <- may exist in root from pre-run-folder history
-  .token.json                         <- only exists on CCG auth (not with ADMIN_TOKEN)
-  audit-<stamp>/                      <- one folder per run (UTC+5 stamp), all CSVs/PDF/XLSX
+  caches/
+    catalog-products.jsonl            <- cache (overwritten each fetch)
+    catalog-collections.jsonl         <- cache
+    catalog-collections-members.jsonl <- cache (only --members runs refresh it)
+    .token.json                       <- only exists on CCG auth (not with ADMIN_TOKEN)
+    .bulkops.json                     <- in-flight bulk op ids for resume/reuse (2h window)
+  runs/
+    audit-<stamp>/                    <- one folder per run (UTC+5 stamp), all CSVs/PDF/XLSX
+  snapshots/
+    catalog-snapshot-YYYY-MM-DD.md    <- doc chain, one per day, same-day reruns overwrite
+  summaries/
+    fill-rate-summary-*.json          <- the delta chain ("previous" for the diff line)
+    collections-baseline.json         <- drift reference for RULE_LOST / COUNT_DROP
+  paste/
+    paste-<handle>-keyword-rules.json <- make_paste_lists.py output for Mechanic
+    paste-<handle>-allowed-values.json
 ```
 
-Safe to delete: old `audit-*` folders (keep the latest), any loose stamped reports.
-Keep: caches, baseline, the newest fill-rate-summary anywhere (it's the delta chain's
-"previous" — `load_previous_summary` globs root AND run folders by basename), and the
-snapshot MD chain. Deleting all summaries just resets deltas to first-run blanks.
+Subfolders come from `config.cache_dir()` / `runs_dir()` / `snapshots_dir()` /
+`summaries_dir()` / `paste_dir()` (resolved against `OUT_DIR` at call time, created on
+write); file paths come from the `config.CACHE_*` / `COLLECTIONS_BASELINE` / `TOKEN_CACHE`
+constants. Don't hardcode output paths in new scripts.
+
+Safe to delete: old `runs/audit-*` folders (keep the latest).
+Keep: `caches/`, the baseline, the newest fill-rate-summary in `summaries/` (it's the
+delta chain's "previous" — `load_previous_summary` globs `summaries/` first, plus the
+pre-reorg root and run-folder locations, by basename), and the snapshot MD chain.
+Deleting all summaries just resets deltas to first-run blanks.
 
 ## 8. Reading the reports
 

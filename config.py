@@ -17,11 +17,48 @@ STORE_SLUG = os.environ.get("STORE_SLUG", "soccer-wearhouse")
 STOREFRONT = os.environ.get("STOREFRONT", "https://soccerwearhouse.com")
 
 OUT_DIR = os.environ.get("OUT_DIR", "output")
-CACHE_PRODUCTS_JSONL = os.path.join(OUT_DIR, "catalog-products.jsonl")
-CACHE_COLLECTIONS_JSONL = os.path.join(OUT_DIR, "catalog-collections.jsonl")
-COLLECTIONS_BASELINE = os.path.join(OUT_DIR, "collections-baseline.json")
-CACHE_COLLECTIONS_MEMBERS = os.path.join(OUT_DIR, "catalog-collections-members.jsonl")
-TOKEN_CACHE = os.path.join(OUT_DIR, ".token.json")
+
+
+def subdir(name):
+    """Resolve an output subfolder against the CURRENT OUT_DIR and create it.
+    Call-site resolution (not an import-time constant) so an OUT_DIR override
+    still redirects everything."""
+    path = os.path.join(OUT_DIR, name)
+    os.makedirs(path, exist_ok=True)
+    return path
+
+
+def cache_dir():
+    return subdir("caches")
+
+
+def runs_dir():
+    return subdir("runs")
+
+
+def snapshots_dir():
+    return subdir("snapshots")
+
+
+def summaries_dir():
+    return subdir("summaries")
+
+
+def paste_dir():
+    return subdir("paste")
+
+
+CACHE_DIR = os.path.join(OUT_DIR, "caches")
+RUNS_DIR = os.path.join(OUT_DIR, "runs")
+SNAPSHOTS_DIR = os.path.join(OUT_DIR, "snapshots")
+SUMMARIES_DIR = os.path.join(OUT_DIR, "summaries")
+PASTE_DIR = os.path.join(OUT_DIR, "paste")
+
+CACHE_PRODUCTS_JSONL = os.path.join(CACHE_DIR, "catalog-products.jsonl")
+CACHE_COLLECTIONS_JSONL = os.path.join(CACHE_DIR, "catalog-collections.jsonl")
+COLLECTIONS_BASELINE = os.path.join(SUMMARIES_DIR, "collections-baseline.json")
+CACHE_COLLECTIONS_MEMBERS = os.path.join(CACHE_DIR, "catalog-collections-members.jsonl")
+TOKEN_CACHE = os.path.join(CACHE_DIR, ".token.json")
 
 STAMP_TZ = datetime.timezone(datetime.timedelta(hours=int(os.getenv("STAMP_UTC_OFFSET_HOURS", "5"))))
 
@@ -33,7 +70,7 @@ SYNC_LAG_HOURS = int(os.environ.get("SYNC_LAG_HOURS", "48"))
 
 
 def run_dir(stamp):
-    path = os.path.join(OUT_DIR, f"audit-{stamp}")
+    path = os.path.join(runs_dir(), f"audit-{stamp}")
     os.makedirs(path, exist_ok=True)
     return path
 

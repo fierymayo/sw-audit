@@ -44,8 +44,7 @@ def main(delta_path, handle):
             by_canonical[key] = rules[-1]
             added_rules += 1
 
-    os.makedirs(config.OUT_DIR, exist_ok=True)
-    out = os.path.join(config.OUT_DIR, f"paste-{handle}-keyword-rules.json")
+    out = os.path.join(config.paste_dir(), f"paste-{handle}-keyword-rules.json")
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(rules, fh, indent=2, ensure_ascii=False)
     print(f"wrote {out}  ({len(rules)} rules: +{added_rules} new, "
@@ -56,7 +55,7 @@ def main(delta_path, handle):
         have = {norm(v) for v in allowed}
         merged = list(allowed) + [d["canonical_value"] for d in delta
                                   if norm(d["canonical_value"]) not in have]
-        out = os.path.join(config.OUT_DIR, f"paste-{handle}-allowed-values.json")
+        out = os.path.join(config.paste_dir(), f"paste-{handle}-allowed-values.json")
         with open(out, "w", encoding="utf-8") as fh:
             json.dump(merged, fh, indent=2, ensure_ascii=False)
         print(f"wrote {out}  ({len(merged)} values, +{len(merged) - len(allowed)} new)")

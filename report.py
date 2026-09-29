@@ -46,7 +46,9 @@ def write_filled_csvs(stamp, filled_rows, log=print):
 
 
 def load_previous_summary():
-    files = sorted(glob.glob(os.path.join(config.OUT_DIR, "fill-rate-summary-*.json"))
+    files = sorted(glob.glob(os.path.join(config.summaries_dir(), "fill-rate-summary-*.json"))
+                   + glob.glob(os.path.join(config.OUT_DIR, "fill-rate-summary-*.json"))
+                   + glob.glob(os.path.join(config.runs_dir(), "audit-*", "fill-rate-summary-*.json"))
                    + glob.glob(os.path.join(config.OUT_DIR, "audit-*", "fill-rate-summary-*.json")),
                    key=os.path.basename)
     if not files:
@@ -56,8 +58,7 @@ def load_previous_summary():
 
 
 def write_summary(stamp, summary, log=print):
-    os.makedirs(config.OUT_DIR, exist_ok=True)
-    path = _stamped("fill-rate-summary", stamp, "json")
+    path = os.path.join(config.summaries_dir(), f"fill-rate-summary-{stamp}.json")
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(summary, fh, indent=2, ensure_ascii=False)
     log(f"  wrote {path}")
@@ -143,8 +144,7 @@ def write_snapshot_md(summary, prev, cache_path, log=print):
     lines.append(f"Generated {summary['generated_at']} · rules file {summary.get('rules_file_date', 'NONE')} "
                  f"· cache {os.path.basename(cache_path)} ({cache_mtime})")
 
-    os.makedirs(config.OUT_DIR, exist_ok=True)
-    path = os.path.join(config.OUT_DIR, f"catalog-snapshot-{summary['generated_at'][:10]}.md")
+    path = os.path.join(config.snapshots_dir(), f"catalog-snapshot-{summary['generated_at'][:10]}.md")
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write("\n".join(lines) + "\n")
     log(f"  wrote {path}")

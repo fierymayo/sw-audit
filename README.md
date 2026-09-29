@@ -15,7 +15,7 @@ python make_task_configs.py            # after dropping Mechanic exports into ta
 Dev Dashboard apps don't show a permanent `shpat_` token. Instead, put the app's
 **Client ID + Client Secret** (App settings → Credentials) in `.env`. The tool then
 mints a 24h admin token per run via the **client credentials grant** and caches it
-in `output/.token.json`. Scopes come from the released app version.
+in `output/caches/.token.json`. Scopes come from the released app version.
 
 If minting fails with `shop_not_permitted`, the app and store aren't in the same
 Dev Dashboard organization. Then either:
@@ -58,7 +58,7 @@ Every report prints the config file date; treat stale-dated runs with suspicion.
 
 ## Outputs
 
-Per-run reports land in `output/audit-<stamp>/` (one folder per run, stamped UTC+5). Caches (`catalog-*.jsonl`), `collections-baseline.json`, the token cache, and the daily `catalog-snapshot-*.md` chain stay in `output/` root.
+Per-run reports land in `output/runs/audit-<stamp>/`; catalog caches in `output/caches/`; snapshots, fill-rate summaries and paste lists in `output/snapshots/`, `output/summaries/`, `output/paste/`.
 
 | File | What it is |
 |---|---|
