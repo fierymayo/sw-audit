@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-09-29T03:49:05+05:00",
+    "generated_at": "2026-09-30T01:04:36+05:00",
     "sources": [
       "32fa6df3-2648-48ca-a848-95c8a947757a.json",
       "3d13ffef-2101-455b-a940-54eeb7f4f7d0.json",
@@ -2178,12 +2178,6 @@
         ]
       },
       {
-        "canonical_value": "Frenkie de Jong",
-        "safe_keywords": [
-          "frenkie de jong"
-        ]
-      },
-      {
         "canonical_value": "Marc Bernal",
         "safe_keywords": [
           "marc bernal"
@@ -2205,6 +2199,38 @@
         "canonical_value": "Hamza Abdelkarim",
         "safe_keywords": [
           "abdelkarim"
+        ]
+      },
+      {
+        "canonical_value": "Luke Shaw",
+        "safe_keywords": [
+          "luke shaw"
+        ]
+      },
+      {
+        "canonical_value": "Matthijs de Ligt",
+        "safe_keywords": [
+          "matthijs de ligt",
+          "de ligt"
+        ]
+      },
+      {
+        "canonical_value": "Leny Yoro",
+        "safe_keywords": [
+          "leny yoro",
+          "yoro"
+        ]
+      },
+      {
+        "canonical_value": "Ayden Heaven",
+        "safe_keywords": [
+          "ayden heaven"
+        ]
+      },
+      {
+        "canonical_value": "Patrick Chinazaekpere Dorgu",
+        "safe_keywords": [
+          "dorgu"
         ]
       }
     ],
@@ -2403,11 +2429,15 @@
       "Subuloye",
       "Xavi Espart",
       "Brian Fariñas",
-      "Frenkie de Jong",
       "Marc Bernal",
       "Raphael Dias Belloli",
       "Jesse Bisiwu",
-      "Hamza Abdelkarim"
+      "Hamza Abdelkarim",
+      "Luke Shaw",
+      "Matthijs de Ligt",
+      "Leny Yoro",
+      "Ayden Heaven",
+      "Patrick Chinazaekpere Dorgu"
     ],
     "metafield_key": "player_filter"
   },

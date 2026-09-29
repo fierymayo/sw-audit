@@ -128,4 +128,5 @@ class Dashboard:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    Dashboard(root).mainloop()
+    Dashboard(root)
+    root.mainloop()

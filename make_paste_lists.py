@@ -16,7 +16,7 @@ def norm(s):
     return " ".join((s or "").lower().split())
 
 
-def main(delta_path, handle):
+def main(delta_path, handle, remove=()):
     with open(config.TASK_CONFIGS, encoding="utf-8") as fh:
         cfg = json.load(fh)
     entry = cfg.get(handle) or {}
@@ -44,6 +44,17 @@ def main(delta_path, handle):
             by_canonical[key] = rules[-1]
             added_rules += 1
 
+    removed_keys = set()
+    for name in remove:
+        key = norm(name)
+        if key in by_canonical:
+            rules = [r for r in rules if norm(r.get("canonical_value")) != key]
+            del by_canonical[key]
+            removed_keys.add(key)
+            print(f"  removed rule: {name}")
+        else:
+            print(f"  remove: '{name}' not found — skipped")
+
     out = os.path.join(config.paste_dir(), f"paste-{handle}-keyword-rules.json")
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(rules, fh, indent=2, ensure_ascii=False)
@@ -53,8 +64,9 @@ def main(delta_path, handle):
     allowed = entry.get("allowed_values")
     if allowed:
         have = {norm(v) for v in allowed}
-        merged = list(allowed) + [d["canonical_value"] for d in delta
-                                  if norm(d["canonical_value"]) not in have]
+        merged = [v for v in allowed if norm(v) not in removed_keys]
+        merged += [d["canonical_value"] for d in delta
+                   if norm(d["canonical_value"]) not in have]
         out = os.path.join(config.paste_dir(), f"paste-{handle}-allowed-values.json")
         with open(out, "w", encoding="utf-8") as fh:
             json.dump(merged, fh, indent=2, ensure_ascii=False)
@@ -64,6 +76,14 @@ def main(delta_path, handle):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    remove = []
+    while "--remove" in args:
+        i = args.index("--remove")
+        if i + 1 >= len(args):
+            sys.exit("--remove needs a canonical value")
+        remove.append(args[i + 1])
+        del args[i:i + 2]
+    if len(args) != 2:
         sys.exit(__doc__)
-    main(sys.argv[1], sys.argv[2])
+    main(args[0], args[1], remove)
