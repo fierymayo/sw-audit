@@ -121,17 +121,16 @@ def build_pdf(rows, stamp, log=print):
 
 
 def _condition_spec(rule):
-    conds = []
+    if rule["kind"] == "whole_type":
+        return {"kind": "type", "value": rule["type"]}
+    if rule["kind"] == "subcat":
+        return {"kind": "tag", "value": rule["tag"]}
     if rule["kind"] == "metafield":
-        conds.append({"condition": "metafield_string_equals",
-                      "metafield": f"custom.{rule['filter_key']}", "value": rule["value"]})
         if "type" in rule:
-            conds.append({"condition": "product_type_equals", "type": rule["type"]})
-    elif rule["kind"] == "whole_type":
-        conds.append({"condition": "product_type_equals", "type": rule["type"]})
-    elif rule["kind"] == "subcat":
-        conds.append({"condition": "tag_contains", "tag": rule["tag"]})
-    return {"spec_version": "sw-audit/1", "additive": True, "conditions": conds}
+            return None
+        return {"kind": "metafield", "namespace": "custom",
+                "key": rule["filter_key"], "value": rule["value"]}
+    return None
 
 
 def build_rules_payload(rows, stamp, log=print):
@@ -140,11 +139,16 @@ def build_rules_payload(rows, stamp, log=print):
         p = r.get("_payload")
         if r["classification"] != "AUTOMATABLE" or not p:
             continue
+        spec = _condition_spec(p["rule"])
+        if spec is None:
+            log(f"  payload: skipped '{r['title']}' \u2014 compound rule needs task-side "
+                f"multi-condition support (kept in xlsx only)")
+            continue
         entries.append({"collection_gid": p["collection_gid"],
                         "collection_id": p["collection_gid"].rsplit("/", 1)[-1],
                         "title": r["title"],
                         "rule": p["rule"],
-                        "condition_spec": _condition_spec(p["rule"])})
+                        "condition_spec": spec})
     if not entries:
         return None
     path = os.path.join(config.run_dir(stamp), f"collection-rules-payload-{stamp}.json")
