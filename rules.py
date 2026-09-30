@@ -74,7 +74,7 @@ def config_lint(cfg):
                     f"every match is permanently ambiguous.")
         if handle == "club" and allowed:
             n = len(allowed)
-            level = "ERROR" if n >= 120 else "WARN" if n >= 110 else "INFO"
+            level = "ERROR" if n >= 120 else "WARN" if n >= 100 else "INFO"
             add(level, handle, f"club allowed_values at {n}/{CLUB_CHOICE_LIST_CAP} choice-list cap"
                                + (" — drop the definition validation soon." if n >= 110 else "."))
 

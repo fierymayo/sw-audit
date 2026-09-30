@@ -126,17 +126,27 @@ def blanks_top_values(blanks, top=12):
     return out
 
 
+def _audit_ignores():
+    try:
+        with open(config.AUDIT_IGNORE, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
 def pass_filled_check(products, cfg):
     """Filled-value cross-check. None in fallback mode (no rules). One row per
     product/filter; an orphan that also has a prediction stays FILLED_ORPHAN."""
     active = _active(products)
     rows_by_filter, orphans = {}, {}
+    ignores = _audit_ignores().get("filled_orphans_ok") or {}
     for filter_key, handle in FILTER_HANDLES:
         entry = (cfg or {}).get(handle)
         compiled = entry.get("_compiled") if entry else None
         if not compiled:
             continue
         canonicals = entry["_canonicals"]
+        ok_values = {v.strip() for v in ignores.get(filter_key) or []}
         rows, counts = [], Counter()
         for p in active:
             stored = p[filter_key]
@@ -144,8 +154,11 @@ def pass_filled_check(products, cfg):
                 continue
             predicted, _ambiguous = match_title(p["title"], compiled)
             if stored not in canonicals:
-                finding = "FILLED_ORPHAN"
-                counts[stored] += 1
+                if stored in ok_values:
+                    finding = "FILLED_ACKNOWLEDGED"
+                else:
+                    finding = "FILLED_ORPHAN"
+                    counts[stored] += 1
             elif predicted and predicted != stored:
                 finding = "FILLED_DIVERGENT"
             else:

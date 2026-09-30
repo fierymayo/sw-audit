@@ -1,3 +1,4 @@
+import json
 import os
 
 import config
@@ -116,4 +117,38 @@ def build_pdf(rows, stamp, log=print):
     SimpleDocTemplate(path, pagesize=landscape(letter),
                       title="SW Collections to Automate").build(story)
     log(f"  wrote {path}")
+    return path
+
+
+def _condition_spec(rule):
+    conds = []
+    if rule["kind"] == "metafield":
+        conds.append({"condition": "metafield_string_equals",
+                      "metafield": f"custom.{rule['filter_key']}", "value": rule["value"]})
+        if "type" in rule:
+            conds.append({"condition": "product_type_equals", "type": rule["type"]})
+    elif rule["kind"] == "whole_type":
+        conds.append({"condition": "product_type_equals", "type": rule["type"]})
+    elif rule["kind"] == "subcat":
+        conds.append({"condition": "tag_contains", "tag": rule["tag"]})
+    return {"spec_version": "sw-audit/1", "additive": True, "conditions": conds}
+
+
+def build_rules_payload(rows, stamp, log=print):
+    entries = []
+    for r in rows:
+        p = r.get("_payload")
+        if r["classification"] != "AUTOMATABLE" or not p:
+            continue
+        entries.append({"collection_gid": p["collection_gid"],
+                        "collection_id": p["collection_gid"].rsplit("/", 1)[-1],
+                        "title": r["title"],
+                        "rule": p["rule"],
+                        "condition_spec": _condition_spec(p["rule"])})
+    if not entries:
+        return None
+    path = os.path.join(config.run_dir(stamp), f"collection-rules-payload-{stamp}.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(entries, fh, indent=2, ensure_ascii=False)
+    log(f"  wrote {path}  ({len(entries)} rule payload(s))")
     return path

@@ -93,6 +93,40 @@ CANDIDATE_ROW_FIELDS = ["title", "handle", "count", "classification", "suggested
 _SUFFIX = re.compile(r"\s+(soccer\s+)?(jerseys?|gear|accessories|accessory|patches|collection|apparel|merch(andise)?)(\s*([&,+]|and)\s*.*)?$",
                      re.IGNORECASE)
 
+_TYPE_WORDS_NORM = {normalize(k): v for k, v in TYPE_WORDS.items()}
+_SUBCAT_QUALIFIERS = {"official", "premium"}
+
+
+def _singular(word):
+    if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+        return word[:-1]
+    return word
+
+
+def _subcat_vocab(cfg, products_ctx):
+    tags = {s.strip() for s in ((cfg or {}).get("subcat") or {}).get("addon_eligible_subcats") or []
+            if s.strip()}
+    for p in (products_ctx or {}).get("active", []):
+        for t in p["tags"]:
+            if t.startswith("SubCat_"):
+                tags.add(t)
+    return tags
+
+
+def _subcat_for(core_words, vocab):
+    hits = []
+    for tag in vocab:
+        tw = {_singular(w) for w in normalize(tag[len("SubCat_"):]).split()}
+        if not tw:
+            continue
+        if core_words <= tw:
+            hits.append(tag)
+        elif tw <= core_words and (core_words - tw) <= _SUBCAT_QUALIFIERS:
+            hits.append(tag)
+    if len(hits) == 1:
+        return hits[0], False
+    return None, len(hits) > 1
+
 
 def load_collections(jsonl_path):
     out = []
@@ -326,8 +360,21 @@ def _classify_candidate(c, cfg, products_ctx, members=None):
         return _review(c, "multiple/ambiguous entity matches"), None
 
     if products_ctx:
-        whole = TYPE_WORDS.get(core_norm) or next(
-            (t for t in products_ctx["type_counts"] if normalize(t) == core_norm), None)
+        wt_norm = normalize(title)
+        wt_sans = " ".join(w for w in wt_norm.split() if w != "soccer")
+        whole = None
+        for cand in (wt_norm, wt_sans):
+            if not cand:
+                continue
+            whole = _TYPE_WORDS_NORM.get(cand) or next(
+                (t for t in products_ctx["type_counts"] if normalize(t) == cand), None)
+            if whole:
+                break
+        if whole is None:
+            toks = [t for t in wt_sans.split() if t != "and"]
+            mapped = {_TYPE_WORDS_NORM.get(t) for t in toks}
+            if toks and len(mapped) == 1 and None not in mapped:
+                whole = mapped.pop()
         if whole:
             total = products_ctx["type_counts"].get(whole, 0)
             covered = c["count"]
@@ -342,6 +389,16 @@ def _classify_candidate(c, cfg, products_ctx, members=None):
             if total:
                 return _review(c, f"type-named but only {covered} of {total} active "
                                   f"{whole} products are members \u2014 curated subset"), None
+        vocab = _subcat_vocab(cfg, products_ctx)
+        if vocab:
+            core_words = {_singular(w) for w in wt_sans.split() if w != "and"}
+            tag, ambiguous = _subcat_for(core_words, vocab)
+            if tag:
+                rule = {"kind": "subcat", "tag": tag}
+                return ("AUTOMATABLE", "Category tag",
+                        f"Tag contains '{tag}' (additive; keep manual selections)", ""), rule
+            if ambiguous:
+                return _review(c, "ambiguous SubCat mapping \u2014 several tags fit"), None
     return _review(c, "no decomposition \u2014 likely thematic/custom"), None
 
 
@@ -352,6 +409,8 @@ def _rule_matches(rule, p):
         return p["type"] == rule["type"] if "type" in rule else True
     if rule["kind"] == "whole_type":
         return p["type"] == rule["type"]
+    if rule["kind"] == "subcat":
+        return rule["tag"] in p["tags"]
     if rule["kind"] == "colour":
         return p["type"] == rule["type"] and rule["colour"] in p["title"].lower()
     return False
@@ -373,7 +432,9 @@ def find_candidates(collections, cfg, products_ctx=None, members=None):
                      "classification": classification,
                      "suggested_rule": suggested or detail,
                      "admin_url": config.admin_collection_url(c["id"]),
-                     "rule_type": rule_type, "adds": adds, "count_after": count_after})
+                     "rule_type": rule_type, "adds": adds, "count_after": count_after,
+                     "_payload": ({"collection_gid": c["gid"], "rule": rule}
+                                  if rule else None)})
     order = {"AUTOMATABLE": 0, "COLOUR_VERIFY": 1, "REVIEW": 2, "KEEP_MANUAL": 3}
     rows.sort(key=lambda r: (order[r["classification"]],
                              -(r["adds"] if isinstance(r["adds"], int) else -1),
@@ -420,16 +481,18 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, l
     log(f"  health findings: {len(health)}")
 
     candidates = find_candidates(collections, cfg, products_ctx=products_ctx, members=members)
+    import deliverable as dlv
     if candidates:
         report.write_rows_csv(os.path.join(config.run_dir(stamp), f"collections-candidates-{stamp}.csv"),
-                              candidates, CANDIDATE_ROW_FIELDS)
+                              [{k: v for k, v in r.items() if k != "_payload"} for r in candidates],
+                              CANDIDATE_ROW_FIELDS)
+        dlv.build_rules_payload(candidates, stamp, log=log)
     counts = {}
     for r in candidates:
         counts[r["classification"]] = counts.get(r["classification"], 0) + 1
     log("  candidates: " + "  ".join(f"{k}={v}" for k, v in sorted(counts.items())))
 
     if deliverable:
-        import deliverable as dlv
         dlv.build_xlsx(candidates, stamp, log=log)
         dlv.build_pdf(candidates, stamp, log=log)
 

@@ -101,6 +101,7 @@ Active products where the filter is already filled, run through the same task ma
 |---|---|---|
 | FILLED_ORPHAN | Stored value is not any rule canonical for that filter (per-value counts also land in the summary JSON under `filled_orphans`). One row per product; `predicted_value` shows what the matcher would say, if anything | Decide: add a rule, or leave the manual value |
 | FILLED_DIVERGENT | Stored value is a valid canonical, but the matcher predicts a different one. Tasks are `add_only` and will never change a filled value | Info only |
+| FILLED_ACKNOWLEDGED | Stored value is on the audit-ignore.json allow-list (known manual/sentinel values like `No Club`). Excluded from orphan counts | None |
 
 No finding when the matcher predicts nothing or agrees.
 

@@ -66,6 +66,7 @@ def now():
     return datetime.datetime.now(STAMP_TZ)
 
 TASK_CONFIGS = os.environ.get("TASK_CONFIGS", "task-configs.json")
+AUDIT_IGNORE = "audit-ignore.json"
 SYNC_LAG_HOURS = int(os.environ.get("SYNC_LAG_HOURS", "48"))
 
 

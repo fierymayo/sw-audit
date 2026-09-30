@@ -225,9 +225,10 @@ Definitions (columns, codes, meanings): README.md. What to DO with each:
   Ready-sheet recount) — exact match.
 - Colour rule evaluation uses plain substring on purpose = Shopify "Title contains"
   semantics; the audit's Adds mirror what the live rule would really do.
-- Forecast and filled-check share the same matcher; synthetic tests pass, but neither
-  has had a live confirmation event yet — the first applied forecast should be verified
-  against actual task results.
+- Forecast and filled-check share the same matcher; synthetic tests pass, and the
+  loop closed live on 2026-09-30: club batch-1 forecast 25 fills, task produced
+  exactly 25 (player 261 actives, residual accounted). Verify each applied
+  forecast the same way.
 
 ## 10. Known limitations and false positives
 
