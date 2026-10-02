@@ -20,6 +20,7 @@ import sys
 from collections import Counter
 
 import config
+import history
 import report
 from catalog import FILTERS, PRODUCTS_BULK_QUERY, load_products
 from passes import (FORECAST_ROW_FIELDS, blanks_reason_counts, pass_addon_coverage,
@@ -64,8 +65,6 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         sys.exit(f"No cached JSONL at {config.CACHE_PRODUCTS_JSONL}. Run without --cached first.")
 
     log("Loading products...")
-    if not os.path.exists(config.CACHE_PRODUCTS_JSONL):
-        sys.exit("No products cache — run a products audit first, then retry.")
     products = load_products(config.CACHE_PRODUCTS_JSONL)
     log(f"  {len(products):,} products")
 
@@ -158,7 +157,9 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         attention.append(f"addon_missing={len(coverage['missing_tag'])}")
     if errors:
         attention.append(f"lint_errors={len(errors)}")
-    log("  HEALTH: " + ("ATTENTION — " + "  ".join(attention) if attention else "OK"))
+    health_status = ("ATTENTION — " + "  ".join(attention)) if attention else "OK"
+    log("  HEALTH: " + health_status)
+    history.append_products(stamp, products, summary, blanks, filled, health_status)
     report.write_lint(stamp, findings, log=log)
     if pdf:
         report.build_pdf(stamp, summary, blanks, coverage, vendors, findings, log=log)

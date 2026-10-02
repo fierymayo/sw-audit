@@ -159,6 +159,8 @@ def build_patch(delta_path, handle, cached=False, remove=(), log=print):
     if allowed_before:
         _write_json("allowed_values_json.txt", allowed)
 
+    if not os.path.exists(config.CACHE_PRODUCTS_JSONL):
+        sys.exit("No products cache — run a products audit first, then retry.")
     products = load_products(config.CACHE_PRODUCTS_JSONL)
     filter_key = next(k for k, h in FILTER_HANDLES if h == handle)
     patched_compiled = compile_rules(rules)

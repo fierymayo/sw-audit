@@ -21,6 +21,7 @@ import sys
 from collections import defaultdict
 
 import config
+import history
 import report
 from catalog import load_products
 from matcher import match_title, normalize
@@ -172,6 +173,13 @@ def save_baseline(collections, log=print):
     }
     with open(config.COLLECTIONS_BASELINE, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=2, ensure_ascii=False)
+    dated_dir = os.path.join(config.summaries_dir(), "baselines")
+    os.makedirs(dated_dir, exist_ok=True)
+    dated = os.path.join(dated_dir, f"collections-baseline-{config.now():%Y%m%d-%H%M}.json")
+    with open(dated, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=2, ensure_ascii=False)
+    for name in sorted(os.listdir(dated_dir))[:-15]:
+        os.remove(os.path.join(dated_dir, name))
     log(f"  baseline saved ({len(collections)} collections) -> {config.COLLECTIONS_BASELINE}")
 
 
@@ -500,8 +508,11 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, l
     for r in health:
         if r["finding"] in ("RULE_LOST", "COUNT_DROP"):
             alerts[r["finding"]] = alerts.get(r["finding"], 0) + 1
-    log("  HEALTH: " + ("ATTENTION — " + "  ".join(f"{k}={v}" for k, v in sorted(alerts.items()))
-                        if alerts else "OK"))
+    health_status = ("ATTENTION — " + "  ".join(f"{k}={v}" for k, v in sorted(alerts.items()))
+                     ) if alerts else "OK"
+    log("  HEALTH: " + health_status)
+    history.append_collections(stamp, collections, candidates_counts=counts,
+                               health_findings=len(health), health=health_status)
     if not cached or not baseline:
         save_baseline(collections, log=log)
     else:

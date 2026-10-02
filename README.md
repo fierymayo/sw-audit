@@ -78,6 +78,7 @@ Per-run reports land in `output/runs/audit-<stamp>/`; catalog caches in `output/
 | `collections-candidates-*.csv` | Manual collections classified AUTOMATABLE / REVIEW / KEEP_MANUAL with a suggested additive rule |
 | `audit-report-*.pdf` | Merchant-facing summary (`--pdf`, needs reportlab) |
 | `subcat-sim-*.csv` | Predicted vs actual SubCat tags (task-logic simulation): MISSING_SUBCAT / WILL_REPLACE / UNPREDICTED_EXISTING, with eligibility columns |
+| `history/metrics.jsonl` | append-only run metrics, one JSON line per run; seed/extend with `python history.py --backfill` |
 | `Collections-to-Automate-*.xlsx` / `.pdf` | Merchant deliverable: Ready-to-Automate + Needs-Review sheets with Adds / Count After and Approve column |
 ## Reason codes (blanks CSVs)
 

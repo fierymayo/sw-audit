@@ -52,9 +52,12 @@ class BuildPatchTests(unittest.TestCase):
         self._write_cfg(_cfg())
         with open("audit-ignore.json", "w") as fh:
             json.dump({"filled_orphans_ok": {"player_filter": ["No Player"]}}, fh)
+        with open("products-cache.jsonl", "w") as fh:
+            fh.write("")
         self.patches = [
             patch.object(mpl.config, "TASK_CONFIGS", "task-configs.json"),
             patch.object(mpl.config, "AUDIT_IGNORE", "audit-ignore.json"),
+            patch.object(mpl.config, "CACHE_PRODUCTS_JSONL", "products-cache.jsonl", create=True),
             patch.object(mpl.config, "paste_dir", lambda: "paste", create=True),
             patch.object(mpl, "load_products", lambda *a, **k: PRODUCTS),
         ]
