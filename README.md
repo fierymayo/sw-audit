@@ -46,13 +46,13 @@ python collections_audit.py --members --deliverable   # + merchant XLSX and PDF
 
 ```
 
-## Keeping task-configs.json fresh
+## Keeping configs/task-configs.json fresh
 
 The audit's reason codes are only facts if its rules match the live Mechanic tasks. Refresh whenever a task's rules change:
 
 1. In Mechanic, export each of the 5 tasks (club sync, country sync, player sync, SubCat/AgeGroup, Normalize) as JSON.
 2. Drop the files into `task-exports/`.
-3. `python make_task_configs.py` — verify the printed counts against the live tasks.
+3. `python make_task_configs.py` — writes `configs/task-configs.json`; verify the printed counts against the live tasks.
 
 Every report prints the config file date; treat stale-dated runs with suspicion.
 
@@ -101,7 +101,7 @@ Active products where the filter is already filled, run through the same task ma
 |---|---|---|
 | FILLED_ORPHAN | Stored value is not any rule canonical for that filter (per-value counts also land in the summary JSON under `filled_orphans`). One row per product; `predicted_value` shows what the matcher would say, if anything | Decide: add a rule, or leave the manual value |
 | FILLED_DIVERGENT | Stored value is a valid canonical, but the matcher predicts a different one. Tasks are `add_only` and will never change a filled value | Info only |
-| FILLED_ACKNOWLEDGED | Stored value is on the audit-ignore.json allow-list (known manual/sentinel values like `No Club`). Excluded from orphan counts | None |
+| FILLED_ACKNOWLEDGED | Stored value is on the configs/audit-ignore.json allow-list (known manual/sentinel values like `No Club`). Excluded from orphan counts | None |
 
 No finding when the matcher predicts nothing or agrees.
 

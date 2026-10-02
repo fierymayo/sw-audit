@@ -284,7 +284,7 @@ class TestGenerator(unittest.TestCase):
 
 
 def _sim_cfg():
-    cfg = load_task_rules(os.path.join(_SIM_REPO, "task-configs.json"))
+    cfg = load_task_rules(os.path.join(_SIM_REPO, "configs", "task-configs.json"))
     if not cfg or not (cfg.get("subcat") or {}).get("product_type_map"):
         raise unittest.SkipTest("real task-configs.json with subcat map required")
     return cfg

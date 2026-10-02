@@ -22,7 +22,7 @@ TASK_HANDLES = {
     "32fa6df3-2648-48ca-a848-95c8a947757a": "subcat",
     "3d13ffef-2101-455b-a940-54eeb7f4f7d0": "normalize",
 }
-OUT_PATH = "task-configs.json"
+OUT_PATH = config.TASK_CONFIGS
 
 
 def _opt(options, suffix):

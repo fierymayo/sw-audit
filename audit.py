@@ -206,7 +206,10 @@ def main():
     ap.add_argument("--lag-hours", type=int, default=None, help="SYNC_LAG window (default 48)")
     ap.add_argument("--forecast", metavar="NEW-RULES.json",
                     help="forecast how many current blanks a delta rule set would fill (no other passes)")
-    ap.add_argument("--filter", choices=[h for _, h in FILTER_HANDLES], help="filter for --forecast")
+    ap.add_argument("--build-patch", metavar="NEW-RULES.json",
+                    help="build paste-ready Mechanic task options from a delta (no other passes)")
+    ap.add_argument("--filter", choices=[h for _, h in FILTER_HANDLES],
+                    help="filter for --forecast / --build-patch")
     args = ap.parse_args()
     if args.forecast:
         if not args.filter:
@@ -214,8 +217,16 @@ def main():
         if args.lint or args.pdf:
             ap.error("--forecast runs no other passes; drop --lint/--pdf")
         return forecast(args.forecast, args.filter, cached=args.cached, force=args.force)
+    if args.build_patch:
+        if not args.filter:
+            ap.error("--build-patch requires --filter")
+        if args.lint or args.pdf:
+            ap.error("--build-patch runs no other passes; drop --lint/--pdf")
+        from make_paste_lists import build_patch
+        build_patch(args.build_patch, args.filter, cached=args.cached)
+        return
     if args.filter:
-        ap.error("--filter is only used with --forecast")
+        ap.error("--filter is only used with --forecast / --build-patch")
     pipeline(cached=args.cached, force=args.force, pdf=args.pdf,
              lint_only=args.lint, lag_hours=args.lag_hours)
 

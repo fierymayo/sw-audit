@@ -22,7 +22,7 @@ chat) decide. That division is a locked decision, not a current limitation.
 ```
 .env ──► config.py ◄──────────────────────────────┐
                                                   │
-task-exports/*.json ─► make_task_configs.py ─► task-configs.json ─► rules.py (load + lint)
+task-exports/*.json ─► make_task_configs.py ─► configs/task-configs.json ─► rules.py (lint)
                                                                         │ compiled rules
 Shopify Admin GraphQL (2026-07)                                         ▼
   └─ bulk ops ─► shopify_client.py ─► output/caches/catalog-*.jsonl ─► catalog.py / loaders
@@ -45,7 +45,7 @@ Module one-liners:
   `bulkOperation(id:)`; `running()` sees only this app's ops; `--force` cancels only those.
 - **catalog.py** — products bulk query + JSONL→dict loader (`__parentId` stitching for
   metafields).
-- **rules.py** — loads task-configs.json, compiles keyword rules, lints config drift.
+- **rules.py** — loads configs/task-configs.json, compiles keyword rules, lints drift.
   `FILTER_HANDLES` = club/country/player only; tournament has no task and is never
   blank-audited.
 - **matcher.py** — VERBATIM parity port of the tasks' normalize/compile/match. Locked.
@@ -60,7 +60,7 @@ Module one-liners:
 - **ui.py** — thin Tkinter front-end; buttons call the same pipelines. Basic actions
   only; forecast is CLI-only.
 - **make_task_configs.py** — parses Mechanic task exports (matched by task UUID) into
-  task-configs.json. The ONLY legitimate way that file changes.
+  configs/task-configs.json. The ONLY legitimate way that file changes.
 
 ## 3. Setup and authentication
 
@@ -81,7 +81,7 @@ Token resolution order (get_admin_token):
 Scope is `read_products` (plus harmless extra read scopes on the released app version).
 The token is never logged, printed, or committed; `.env` and `output/` are gitignored.
 
-## 4. Ground truth: task-configs.json
+## 4. Ground truth: configs/task-configs.json
 
 Every reason code is only a fact if this file matches the live Mechanic tasks. It is
 GENERATED (task-exports/ → make_task_configs.py), never hand-edited. Verified counts at

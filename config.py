@@ -65,8 +65,8 @@ STAMP_TZ = datetime.timezone(datetime.timedelta(hours=int(os.getenv("STAMP_UTC_O
 def now():
     return datetime.datetime.now(STAMP_TZ)
 
-TASK_CONFIGS = os.environ.get("TASK_CONFIGS", "task-configs.json")
-AUDIT_IGNORE = "audit-ignore.json"
+TASK_CONFIGS = os.environ.get("TASK_CONFIGS", "configs/task-configs.json")
+AUDIT_IGNORE = "configs/audit-ignore.json"
 SYNC_LAG_HOURS = int(os.environ.get("SYNC_LAG_HOURS", "48"))
 
 

@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-10-02T03:12:17+05:00",
+    "generated_at": "2026-10-03T02:27:58+05:00",
     "sources": [
       "32fa6df3-2648-48ca-a848-95c8a947757a.json",
       "3d13ffef-2101-455b-a940-54eeb7f4f7d0.json",
@@ -1878,7 +1878,10 @@
       {
         "canonical_value": "Sesko",
         "safe_keywords": [
-          "sesko"
+          "sesko",
+          "šeško",
+          "benjamin sesko",
+          "benjamin šeško"
         ]
       },
       {
@@ -2232,6 +2235,86 @@
         "safe_keywords": [
           "dorgu"
         ]
+      },
+      {
+        "canonical_value": "Maguire",
+        "safe_keywords": [
+          "harry maguire",
+          "maguire"
+        ]
+      },
+      {
+        "canonical_value": "Upamecano",
+        "safe_keywords": [
+          "dayot upamecano",
+          "upamecano"
+        ]
+      },
+      {
+        "canonical_value": "Laimer",
+        "safe_keywords": [
+          "konrad laimer",
+          "laimer"
+        ]
+      },
+      {
+        "canonical_value": "Ugarte",
+        "safe_keywords": [
+          "manuel ugarte",
+          "ugarte"
+        ]
+      },
+      {
+        "canonical_value": "Tielemans",
+        "safe_keywords": [
+          "youri tielemans",
+          "tielemans"
+        ]
+      },
+      {
+        "canonical_value": "Boey",
+        "safe_keywords": [
+          "sacha boey",
+          "boey"
+        ]
+      },
+      {
+        "canonical_value": "Kim Min-jae",
+        "safe_keywords": [
+          "minjae kim",
+          "kim min-jae",
+          "min-jae",
+          "minjae"
+        ]
+      },
+      {
+        "canonical_value": "Bischof",
+        "safe_keywords": [
+          "tom bischof",
+          "bischof"
+        ]
+      },
+      {
+        "canonical_value": "Stanisic",
+        "safe_keywords": [
+          "josip stanišić",
+          "josip stanisic",
+          "stanišić",
+          "stanisic"
+        ]
+      },
+      {
+        "canonical_value": "Saibari",
+        "safe_keywords": [
+          "ismael saibari",
+          "saibari"
+        ]
+      },
+      {
+        "canonical_value": "Andrey Santos",
+        "safe_keywords": [
+          "andrey santos"
+        ]
       }
     ],
     "allowed_values": [
@@ -2437,7 +2520,18 @@
       "Matthijs de Ligt",
       "Leny Yoro",
       "Ayden Heaven",
-      "Patrick Chinazaekpere Dorgu"
+      "Patrick Chinazaekpere Dorgu",
+      "Maguire",
+      "Upamecano",
+      "Laimer",
+      "Ugarte",
+      "Tielemans",
+      "Boey",
+      "Kim Min-jae",
+      "Bischof",
+      "Stanisic",
+      "Saibari",
+      "Andrey Santos"
     ],
     "metafield_key": "player_filter"
   },
