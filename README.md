@@ -37,9 +37,11 @@ python audit.py --pdf          # also emit the merchant-facing PDF
 python audit.py --lint         # task-config lint only
 python audit.py --force        # cancel an in-flight bulk query op and restart
 python audit.py --forecast NEW-rules.json --filter player [--cached]   # rule-delta forecast, no other passes
+python make_paste_lists.py NEW-rules.json <filter> [--cached] [--remove "<canonical>"]   # paste-ready task options
+python audit.py --build-patch NEW-rules.json --filter player [--cached]                  # same builder, via audit.py
 python collections_audit.py            # collections health + automation candidates
 python collections_audit.py --cached
-python ui.py                   # Tkinter front-end (same actions as buttons)
+python dashboard.py            # Tkinter front-end (same actions as buttons)
 python -m unittest discover tests
 python collections_audit.py --members       #also pull membership; compute Adds / Count After
 python collections_audit.py --members --deliverable   # + merchant XLSX and PDF
@@ -78,6 +80,7 @@ Per-run reports land in `output/runs/audit-<stamp>/`; catalog caches in `output/
 | `collections-candidates-*.csv` | Manual collections classified AUTOMATABLE / REVIEW / KEEP_MANUAL with a suggested additive rule |
 | `audit-report-*.pdf` | Merchant-facing summary (`--pdf`, needs reportlab) |
 | `subcat-sim-*.csv` | Predicted vs actual SubCat tags (task-logic simulation): MISSING_SUBCAT / WILL_REPLACE / UNPREDICTED_EXISTING, with eligibility columns |
+| `console-<stamp>.log` | Full console + traceback of each run, in its run dir |
 | `history/metrics.jsonl` | append-only run metrics, one JSON line per run; seed/extend with `python history.py --backfill` |
 | `Collections-to-Automate-*.xlsx` / `.pdf` | Merchant deliverable: Ready-to-Automate + Needs-Review sheets with Adds / Count After and Approve column |
 ## Reason codes (blanks CSVs)
@@ -114,5 +117,9 @@ No finding when the matcher predicts nothing or agrees.
 |---|---|
 | COLLISION_EXISTING(kw -> canonical) | Normalizes identical to an existing keyword of a different canonical — permanently ambiguous |
 | DUPLICATE_IN_DELTA(kw …) | Same normalized keyword appears more than once in the delta |
+
+## Paste-ready patch builder
+
+`python make_paste_lists.py NEW-rules.json <filter> [--cached] [--remove "<canonical>"]` (or `python audit.py --build-patch NEW-rules.json --filter <filter>`) merges a vetted delta into paste-ready task options and writes them to `output/paste/<filter>-<stamp>/`: full `keyword_rules_json.txt` / `allowed_values_json.txt`, a `patch-summary.md` with NEW vs EXTENDED and the forecast fills, an `orphan-normalize.csv` Matrixify import for stored variants of patched canonicals, and `definition-choices-to-add.txt` for club/country. It refuses on COLLISION_EXISTING, DUPLICATE_IN_DELTA, a task export newer than `configs/task-configs.json`, or a club/country choice list over the 128 cap (warn at 100).
 
 It uses the cached catalog and touches the network only if the cache is missing (and `--cached` is not given).

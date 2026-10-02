@@ -57,7 +57,7 @@ Module one-liners:
 - **audit.py / collections_audit.py** — the two orchestrators (§5).
 - **report.py / deliverable.py** — writers. `_stamped()` targets the run folder;
   snapshot MD and summary-chain logic handle root + run-folder history.
-- **ui.py** — thin Tkinter front-end; buttons call the same pipelines. Basic actions
+- **dashboard.py** — Tkinter front-end; buttons call the same pipelines. Basic actions
   only; forecast is CLI-only.
 - **make_task_configs.py** — parses Mechanic task exports (matched by task UUID) into
   configs/task-configs.json. The ONLY legitimate way that file changes.
@@ -85,7 +85,7 @@ The token is never logged, printed, or committed; `.env` and `output/` are gitig
 
 Every reason code is only a fact if this file matches the live Mechanic tasks. It is
 GENERATED (task-exports/ → make_task_configs.py), never hand-edited. Verified counts at
-generation time: player 168 rules, club 87, country 46, subcat 29 addon SubCats,
+generation time: player 214 rules, club 88, country 46, subcat 29 addon SubCats,
 vendor_map 34. Every report prints the file's date (`generated_at`, falling back to
 mtime) — treat stale-dated runs with suspicion. Without the file, audits run in
 "fallback mode": catalog-derived phrases only, every finding becomes CANDIDATE, and
@@ -115,7 +115,7 @@ Collections (`collections_audit.py`):
 | `--deliverable` | none extra | + XLSX/PDF; loads members cache if present, else Adds stay blank |
 
 `python run_all.py` = fresh products (+PDF) then fresh collections (members +
-deliverable). `python ui.py` = buttons for the common actions. Tests:
+deliverable). `python dashboard.py` = buttons for the common actions. Tests:
 `python -m unittest discover tests` — the fixture WARNING about missing task exports is
 normal (a generator test builds a player-only config).
 

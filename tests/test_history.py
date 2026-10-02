@@ -68,6 +68,13 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(rec["ts"], "2026-01-01T01:00:00+05:00")
         self.assertEqual(rec["run"], "20260101-0100")
 
+    def test_schema_and_extra_merge(self):
+        history.append({"kind": "x", "run": "r"})
+        self.assertEqual(self._lines()[-1]["schema"], 1)
+        history.append_products("s", [], {"active": 0}, {}, None, "OK",
+                                extra={"cached": True})
+        self.assertTrue(self._lines()[-1]["cached"])
+
 
 if __name__ == "__main__":
     unittest.main()

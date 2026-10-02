@@ -22,6 +22,7 @@ from collections import Counter
 import config
 import history
 import report
+import runlog
 from catalog import FILTERS, PRODUCTS_BULK_QUERY, load_products
 from passes import (FORECAST_ROW_FIELDS, blanks_reason_counts, pass_addon_coverage,
                     pass_filled_check, pass_filter_blanks, pass_fill_rates, pass_forecast,
@@ -43,7 +44,7 @@ def _fetch_products(force, log):
     client.run_to_file(PRODUCTS_BULK_QUERY, config.CACHE_PRODUCTS_JSONL, force=force, log=log)
 
 
-def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=None, log=print):
+def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=None, stamp=None, log=print):
     cfg = load_task_rules(config.TASK_CONFIGS)
     if cfg:
         log(f"Task rules loaded from {config.TASK_CONFIGS} (dated {cfg['_meta']['file_date']}).")
@@ -68,7 +69,7 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
     products = load_products(config.CACHE_PRODUCTS_JSONL)
     log(f"  {len(products):,} products")
 
-    stamp = config.now().strftime("%Y%m%d-%H%M")
+    stamp = stamp or config.now().strftime("%Y%m%d-%H%M")
     log("Running audits...")
 
     blanks = pass_filter_blanks(products, cfg, lag_hours=lag_hours)
@@ -159,7 +160,39 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         attention.append(f"lint_errors={len(errors)}")
     health_status = ("ATTENTION — " + "  ".join(attention)) if attention else "OK"
     log("  HEALTH: " + health_status)
-    history.append_products(stamp, products, summary, blanks, filled, health_status)
+    actives = [p for p in products if p["status"] == "ACTIVE"]
+    stored_counts = {fk: Counter(p[fk] for p in actives if p[fk]) for fk, _h in FILTER_HANDLES}
+    zero_fill = {}
+    for fk, handle in FILTER_HANDLES:
+        canon = ((cfg or {}).get(handle) or {}).get("_canonicals") or set()
+        if canon:
+            zero_fill[fk] = len(canon - set(stored_counts[fk]))
+    extra = {"cached": cached,
+             "cache_pulled_at": datetime.datetime.fromtimestamp(
+                 os.path.getmtime(config.CACHE_PRODUCTS_JSONL)).isoformat(timespec="seconds"),
+             "task_configs_date": (cfg or {}).get("_meta", {}).get("file_date"),
+             "distinct_stored": {fk: len(c) for fk, c in stored_counts.items()},
+             "zero_fill_canonicals": zero_fill,
+             "blank_type": sum(1 for p in actives if not p["type"]),
+             "vendor": {"distinct": vendors["distinct_vendors_active"],
+                        "findings": len(vendors["rows"])}}
+    if cfg:
+        extra["rule_counts"] = {
+            "club": len((cfg.get("club") or {}).get("keyword_rules") or []),
+            "country": len((cfg.get("country") or {}).get("keyword_rules") or []),
+            "player": len((cfg.get("player") or {}).get("keyword_rules") or []),
+            "subcat": len((cfg.get("subcat") or {}).get("addon_eligible_subcats") or []),
+            "normalize": len((cfg.get("normalize") or {}).get("vendor_map") or {})}
+        extra["allowed_counts"] = {
+            "club": len((cfg.get("club") or {}).get("allowed_values") or []),
+            "country": len((cfg.get("country") or {}).get("allowed_values") or [])}
+    if sim:
+        extra["subcat_sim"] = dict(sim["counts"])
+    if coverage:
+        extra["addon_coverage"] = {"missing": len(coverage["missing_tag"]),
+                                   "stale": len(coverage["stale_tag"]),
+                                   "no_subcat": sum(coverage["no_subcat_always_types"].values())}
+    history.append_products(stamp, products, summary, blanks, filled, health_status, extra=extra)
     report.write_lint(stamp, findings, log=log)
     if pdf:
         report.build_pdf(stamp, summary, blanks, coverage, vendors, findings, log=log)
@@ -228,8 +261,10 @@ def main():
         return
     if args.filter:
         ap.error("--filter is only used with --forecast / --build-patch")
-    pipeline(cached=args.cached, force=args.force, pdf=args.pdf,
-             lint_only=args.lint, lag_hours=args.lag_hours)
+    stamp = config.now().strftime("%Y%m%d-%H%M")
+    runlog.run(stamp, lambda log: pipeline(cached=args.cached, force=args.force, pdf=args.pdf,
+                                           lint_only=args.lint, lag_hours=args.lag_hours,
+                                           stamp=stamp, log=log))
 
 
 if __name__ == "__main__":

@@ -18,11 +18,12 @@ import json
 import os
 import re
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 import config
 import history
 import report
+import runlog
 from catalog import load_products
 from matcher import match_title, normalize
 from rules import FILTER_HANDLES, load_task_rules
@@ -45,6 +46,17 @@ COLLECTIONS_BULK_QUERY = '''
               conditions {
                 __typename
                 ... on CollectionSourceInclusionConditionMetafieldString {
+                  definition { namespace key }
+                  values
+                }
+                ... on CollectionSourceInclusionConditionMetafieldStringList {
+                  definition { namespace key }
+                  values
+                }
+                ... on CollectionSourceInclusionConditionProductType {
+                  values
+                }
+                ... on CollectionSourceInclusionConditionProductTag {
                   values
                 }
               }
@@ -127,6 +139,18 @@ def _subcat_for(core_words, vocab):
     if len(hits) == 1:
         return hits[0], False
     return None, len(hits) > 1
+
+
+_COND_KINDS = {
+    "CollectionSourceInclusionConditionMetafieldString": "metafield",
+    "CollectionSourceInclusionConditionMetafieldStringList": "metafield",
+    "CollectionSourceInclusionConditionProductType": "type",
+    "CollectionSourceInclusionConditionProductTag": "tag",
+}
+
+
+def _cond_kind(cond):
+    return _COND_KINDS.get(cond.get("__typename"), "other")
 
 
 def load_collections(jsonl_path):
@@ -250,7 +274,11 @@ def _warn_cache_drift(log, paths=None, max_hours=6):
     return True
 
 
-def health_check(collections, baseline, cfg):
+def health_check(collections, baseline, cfg, products_ctx=None):
+    type_set = tag_set = None
+    if products_ctx:
+        type_set = {t.casefold() for t in products_ctx["type_counts"]}
+        tag_set = {t.casefold() for p in products_ctx["active"] for t in p["tags"]}
     vocab = set()
     for _, handle in FILTER_HANDLES:
         entry = (cfg or {}).get(handle) or {}
@@ -274,11 +302,18 @@ def health_check(collections, baseline, cfg):
             add(c, "ZERO_WITH_RULE")
         if c["sources_n"] > 1:
             add(c, "MULTI_SOURCE", f"{c['sources_n']} sources")
-        if vocab:
-            for cond in c["conditions"]:
-                for v in cond.get("values") or []:
-                    if v and v not in vocab:
-                        add(c, "UNKNOWN_RULE_VALUE", v)
+        for cond in c["conditions"]:
+            kind = _cond_kind(cond)
+            for v in cond.get("values") or []:
+                if not v:
+                    continue
+                if kind == "metafield":
+                    if vocab and v not in vocab:
+                        add(c, "UNKNOWN_RULE_VALUE", f"metafield value '{v}'")
+                elif kind == "type" and type_set is not None and v.casefold() not in type_set:
+                    add(c, "UNKNOWN_RULE_VALUE", f"type '{v}' matches no active product type")
+                elif kind == "tag" and tag_set is not None and v.casefold() not in tag_set:
+                    add(c, "UNKNOWN_RULE_VALUE", f"tag '{v}' on no active product")
     return rows
 
 
@@ -450,7 +485,7 @@ def find_candidates(collections, cfg, products_ctx=None, members=None):
     return rows
 
 
-def pipeline(cached=False, force=False, members_pull=False, deliverable=False, log=print):
+def pipeline(cached=False, force=False, members_pull=False, deliverable=False, stamp=None, log=print):
     cfg = load_task_rules(config.TASK_CONFIGS)
     if not cached:
         client = ShopifyBulk(config.SHOP_DOMAIN, get_admin_token(log), config.COLLECTIONS_API_VERSION)
@@ -481,8 +516,8 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, l
     if members is not None:
         _warn_cache_drift(log)
 
-    stamp = config.now().strftime("%Y%m%d-%H%M")
-    health = health_check(collections, baseline, cfg)
+    stamp = stamp or config.now().strftime("%Y%m%d-%H%M")
+    health = health_check(collections, baseline, cfg, products_ctx=products_ctx)
     if health:
         report.write_rows_csv(os.path.join(config.run_dir(stamp), f"collections-health-{stamp}.csv"),
                               health, ["title", "handle", "count", "finding", "detail", "admin_url"])
@@ -511,8 +546,30 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, l
     health_status = ("ATTENTION — " + "  ".join(f"{k}={v}" for k, v in sorted(alerts.items()))
                      ) if alerts else "OK"
     log("  HEALTH: " + health_status)
+    ruled_kinds = Counter(_cond_kind(cond) for c in collections for cond in c["conditions"])
+    applied = {}
+    for c in collections:
+        kinds = {_cond_kind(cond) for cond in c["conditions"]}
+        if "type" in kinds or "tag" in kinds:
+            applied[c["id"]] = c["count"]
+        elif "metafield" in kinds:
+            for cond in c["conditions"]:
+                d = cond.get("definition") or {}
+                if d.get("namespace") == "custom" and d.get("key") in (
+                        "club_filter", "country_filter", "player_filter"):
+                    applied[c["id"]] = c["count"]
+                    break
+    extra = {"cached": cached,
+             "cache_pulled_at": datetime.datetime.fromtimestamp(
+                 os.path.getmtime(config.CACHE_COLLECTIONS_JSONL)).isoformat(timespec="seconds"),
+             "task_configs_date": (cfg or {}).get("_meta", {}).get("file_date"),
+             "health_by_code": dict(Counter(r["finding"] for r in health)),
+             "ruled_by_kind": dict(ruled_kinds),
+             "applied_members": applied}
+    if members is not None:
+        extra["memberships"] = sum(len(m) for m in members.values())
     history.append_collections(stamp, collections, candidates_counts=counts,
-                               health_findings=len(health), health=health_status)
+                               health_findings=len(health), health=health_status, extra=extra)
     if not cached or not baseline:
         save_baseline(collections, log=log)
     else:
@@ -529,8 +586,11 @@ def main():
     ap.add_argument("--deliverable", action="store_true",
                     help="also write the merchant XLSX (+ PDF if reportlab is installed)")
     args = ap.parse_args()
-    pipeline(cached=args.cached, force=args.force, members_pull=args.members,
-             deliverable=args.deliverable)
+    stamp = config.now().strftime("%Y%m%d-%H%M")
+    runlog.run(stamp, lambda log: pipeline(cached=args.cached, force=args.force,
+                                           members_pull=args.members,
+                                           deliverable=args.deliverable,
+                                           stamp=stamp, log=log))
 
 
 if __name__ == "__main__":

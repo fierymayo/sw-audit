@@ -30,7 +30,7 @@ def _existing_runs():
 
 def append(record):
     os.makedirs(config.HISTORY_DIR, exist_ok=True)
-    record = {"ts": config.now().isoformat(timespec="seconds"), **record}
+    record = {"schema": 1, "ts": config.now().isoformat(timespec="seconds"), **record}
     with open(config.METRICS_JSONL, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(record, ensure_ascii=False) + "\n")
     return record
@@ -41,7 +41,7 @@ def _fill_pct(summary):
             if k.startswith("fill_") and isinstance(v, dict)}
 
 
-def append_products(stamp, products, summary, blanks, filled, health):
+def append_products(stamp, products, summary, blanks, filled, health, extra=None):
     from passes import blanks_reason_counts
     rec = {"kind": "products", "run": stamp, "health": health,
            "products": len(products), "active": summary.get("active"),
@@ -52,15 +52,19 @@ def append_products(stamp, products, summary, blanks, filled, health):
                                   for fk, rows in filled["rows"].items() if rows}
         rec["orphan_products"] = {fk: sum(c.values())
                                   for fk, c in filled["orphans"].items() if c}
+    if extra:
+        rec.update(extra)
     return append(rec)
 
 
-def append_collections(stamp, collections, candidates_counts, health_findings, health):
+def append_collections(stamp, collections, candidates_counts, health_findings, health, extra=None):
     rec = {"kind": "collections", "run": stamp, "health": health,
            "collections": len(collections),
            "with_rules": sum(1 for c in collections if c.get("has_rule")),
            "candidates": dict(candidates_counts),
            "health_findings": health_findings}
+    if extra:
+        rec.update(extra)
     return append(rec)
 
 
