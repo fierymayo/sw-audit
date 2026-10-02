@@ -17,6 +17,7 @@ import datetime
 import json
 import os
 import re
+import shutil
 import sys
 from collections import Counter, defaultdict
 
@@ -43,20 +44,25 @@ COLLECTIONS_BULK_QUERY = '''
           __typename
           ... on CollectionConditionsSource {
             inclusion {
+              matchType
               conditions {
                 __typename
                 ... on CollectionSourceInclusionConditionMetafieldString {
                   definition { namespace key }
+                  relation
                   values
                 }
                 ... on CollectionSourceInclusionConditionMetafieldStringList {
                   definition { namespace key }
+                  relation
                   values
                 }
                 ... on CollectionSourceInclusionConditionProductType {
+                  relation
                   values
                 }
                 ... on CollectionSourceInclusionConditionProductTag {
+                  relation
                   values
                 }
               }
@@ -153,6 +159,85 @@ def _cond_kind(cond):
     return _COND_KINDS.get(cond.get("__typename"), "other")
 
 
+FILTER_KEYS = ("club_filter", "country_filter", "player_filter")
+
+
+def _product_matches_conditions(p, c):
+    """True/False when every condition is understood; None = can't judge."""
+    conds = c["conditions"]
+    if not conds:
+        return None
+    results = []
+    for cond in conds:
+        kind = _cond_kind(cond)
+        rel = cond.get("relation")
+        vals = cond.get("values") or []
+        if kind == "type":
+            if rel not in (None, "EQUALS"):
+                return None
+            results.append(any(p["type"].casefold() == v.casefold() for v in vals))
+        elif kind == "tag":
+            if rel not in (None, "TAGGED_WITH"):
+                return None
+            ptags = {t.casefold() for t in p["tags"]}
+            results.append(any(v.casefold() in ptags for v in vals))
+        elif kind == "metafield":
+            d = cond.get("definition") or {}
+            fk = d.get("key")
+            if d.get("namespace") != "custom" or fk not in FILTER_KEYS or rel not in (None, "EQUALS"):
+                return None
+            results.append(p.get(fk) in vals)
+        else:
+            return None
+    return all(results) if c.get("match_type") == "ALL" else any(results)
+
+
+def explain_departures(collections, members, prev_members, products_by_gid):
+    rows, inline = [], {}
+    for c in collections:
+        prev = prev_members.get(c["gid"])
+        if prev is None:
+            continue
+        now = members.get(c["gid"], set())
+        departed = prev - now
+        if not departed:
+            continue
+        joined = len(now - prev)
+        counts, examples = Counter(), []
+        for gid in sorted(departed):
+            p = products_by_gid.get(gid)
+            if p is None:
+                status, title, handle, matches = "DELETED", "", "", ""
+            else:
+                status, title, handle = p["status"], p["title"], p["handle"]
+                m = _product_matches_conditions(p, c) if c["has_rule"] else None
+                matches = {True: "yes", False: "no"}.get(m, "")
+            if status == "DELETED":
+                counts["deleted"] += 1
+            elif matches == "no":
+                counts["rule-mismatch"] += 1
+            elif status == "ACTIVE":
+                counts["still ACTIVE"] += 1
+            else:
+                counts["other"] += 1
+            if title and len(examples) < 5:
+                examples.append(title)
+            rows.append({"collection_title": c["title"], "collection_id": c["id"],
+                         "product_gid": gid, "handle": handle, "title": title,
+                         "status_now": status, "still_matches_rule": matches,
+                         "admin_url": config.admin_product_url(gid.rsplit("/", 1)[-1])})
+        parts = " \u00b7 ".join(f"{k} {counts[k]}"
+                                for k in ("deleted", "still ACTIVE", "rule-mismatch", "other")
+                                if counts.get(k))
+        ex = ""
+        if examples:
+            more = len(departed) - len(examples)
+            ex = " \u00b7 e.g. " + ", ".join(examples) + (f" +{more} more" if more > 0 else "")
+        inline[c["handle"]] = (f"-{len(departed) - joined} net (departed {len(departed)}, "
+                               f"joined {joined}) \u00b7 {parts}{ex}")
+    return rows, inline
+
+
 def load_collections(jsonl_path):
     out = []
     with open(jsonl_path, encoding="utf-8") as fh:
@@ -164,9 +249,12 @@ def load_collections(jsonl_path):
             if not obj.get("id", "").startswith("gid://shopify/Collection/"):
                 continue
             sources = obj.get("sources") or []
-            conditions = []
+            conditions, match_type = [], None
             for s in sources:
-                for c in (s.get("inclusion") or {}).get("conditions") or []:
+                inclusion = s.get("inclusion") or {}
+                if match_type is None and inclusion.get("matchType"):
+                    match_type = inclusion["matchType"]
+                for c in inclusion.get("conditions") or []:
                     conditions.append(c)
             out.append({
                 "gid": obj["id"],
@@ -175,6 +263,7 @@ def load_collections(jsonl_path):
                 "handle": obj.get("handle", "") or "",
                 "count": ((obj.get("productsCount") or {}).get("count")) or 0,
                 "sources_n": len(sources),
+                "match_type": match_type,
                 "conditions": conditions,
                 "has_rule": bool(conditions),
             })
@@ -280,9 +369,12 @@ def health_check(collections, baseline, cfg, products_ctx=None):
         type_set = {t.casefold() for t in products_ctx["type_counts"]}
         tag_set = {t.casefold() for p in products_ctx["active"] for t in p["tags"]}
     vocab = set()
-    for _, handle in FILTER_HANDLES:
+    canon_by_key = {}
+    for filter_key, handle in FILTER_HANDLES:
         entry = (cfg or {}).get(handle) or {}
-        vocab |= entry.get("_canonicals", set())
+        canon = entry.get("_canonicals", set())
+        canon_by_key[filter_key] = canon or None
+        vocab |= canon
     vocab |= _metafield_vocab_from_cache()
     prev = (baseline or {}).get("collections", {})
     rows = []
@@ -308,7 +400,14 @@ def health_check(collections, baseline, cfg, products_ctx=None):
                 if not v:
                     continue
                 if kind == "metafield":
-                    if vocab and v not in vocab:
+                    d = cond.get("definition") or {}
+                    fk = d.get("key") if d.get("namespace") == "custom" else None
+                    own = canon_by_key.get(fk)
+                    if own is not None:
+                        if v not in own:
+                            add(c, "UNKNOWN_RULE_VALUE",
+                                f"metafield value '{v}' is not a {fk} canonical")
+                    elif vocab and v not in vocab:
                         add(c, "UNKNOWN_RULE_VALUE", f"metafield value '{v}'")
                 elif kind == "type" and type_set is not None and v.casefold() not in type_set:
                     add(c, "UNKNOWN_RULE_VALUE", f"type '{v}' matches no active product type")
@@ -492,6 +591,9 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, s
         log(f"Kicking off collections bulk operation (API {config.COLLECTIONS_API_VERSION})...")
         client.run_to_file(COLLECTIONS_BULK_QUERY, config.CACHE_COLLECTIONS_JSONL, force=force, log=log)
         if members_pull:
+            if os.path.exists(config.CACHE_COLLECTIONS_MEMBERS):
+                shutil.copyfile(config.CACHE_COLLECTIONS_MEMBERS,
+                                config.CACHE_COLLECTIONS_MEMBERS + ".prev")
             log("Kicking off collection members bulk operation...")
             client.run_to_file(MEMBERS_BULK_QUERY, config.CACHE_COLLECTIONS_MEMBERS, force=force, log=log)
     if not os.path.exists(config.CACHE_COLLECTIONS_JSONL):
@@ -518,6 +620,21 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, s
 
     stamp = stamp or config.now().strftime("%Y%m%d-%H%M")
     health = health_check(collections, baseline, cfg, products_ctx=products_ctx)
+    prev_path = config.CACHE_COLLECTIONS_MEMBERS + ".prev"
+    if members is not None and os.path.exists(prev_path) \
+            and os.path.exists(config.CACHE_PRODUCTS_JSONL):
+        products_by_gid = {p["gid"]: p for p in load_products(config.CACHE_PRODUCTS_JSONL)}
+        dep_rows, dep_inline = explain_departures(collections, members,
+                                                  load_members(prev_path), products_by_gid)
+        if dep_rows:
+            report.write_rows_csv(
+                os.path.join(config.run_dir(stamp), f"collections-departures-{stamp}.csv"),
+                dep_rows, ["collection_title", "collection_id", "product_gid", "handle",
+                           "title", "status_now", "still_matches_rule", "admin_url"])
+            log(f"  departures: {len(dep_rows)} product(s) left {len(dep_inline)} collection(s)")
+            for row in health:
+                if row["finding"] == "COUNT_DROP" and row["handle"] in dep_inline:
+                    row["detail"] = f"{row['detail']}: {dep_inline[row['handle']]}"
     if health:
         report.write_rows_csv(os.path.join(config.run_dir(stamp), f"collections-health-{stamp}.csv"),
                               health, ["title", "handle", "count", "finding", "detail", "admin_url"])
@@ -569,6 +686,10 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, s
              "applied_members": applied}
     if members is not None:
         extra["memberships"] = sum(len(m) for m in members.values())
+        if os.path.exists(config.CACHE_COLLECTIONS_MEMBERS):
+            extra["members_pulled_at"] = datetime.datetime.fromtimestamp(
+                os.path.getmtime(config.CACHE_COLLECTIONS_MEMBERS),
+                tz=config.STAMP_TZ).isoformat(timespec="seconds")
     history.append_collections(stamp, collections, candidates_counts=counts,
                                health_findings=len(health), health=health_status, extra=extra)
     if not cached or not baseline:

@@ -1,79 +1,108 @@
 # SESSION-STATE — sw-audit
-Updated: 2026-10-01 (tickets 1+3 shipped; payload contract fixed). Read
-ROLE-AUDIT-DESIGN-CHAT.md first. NOTE for the role doc: the repo is now a
-connected GitHub mirror in Project knowledge — chats read current code after
-each push+resync; "code travels by paste" is obsolete, outputs/CSVs still
-travel by upload or Cowork.
+Updated: 2026-10-03 (post batch-4, reorg, history/runlog, departures engine).
+Read ROLE-AUDIT-DESIGN-CHAT.md first — NOTE: that doc is NOT in the repo and
+predates the mirror; code now travels by push + connector resync (chats read
+the mirror directly); outputs/CSVs still travel by paste or Cowork. Rewrite
+it at the next handoff.
 
-## Live Mechanic sync tasks (verified 203/88/46/29/34)
-- player 203 rules/values (batch 1 +31/+16kw, batch 2 +5: Luke Shaw,
-  Matthijs de Ligt, Leny Yoro, Ayden Heaven, Patrick Chinazaekpere Dorgu;
-  Frenkie de Jong removed = De Jong split fix). club 88 (+USMNT, Leon 8kw).
-  country 46, subcat 29, normalize 34/30. All add_only.
-- Forecast parity CONFIRMED live: club batch-1 forecast 25 → actual 25
-  exact; player 261 actives, residual accounted. Batch-2 forecast 78.
+## Live Mechanic sync tasks (verified 226/88/46/29/34)
+- player 226 rules/values: batch-1 (+31/+16kw bare-surname buckets),
+  batch-2 (+5, De Jong split fix), batch-3 (+11 incl. qualified-only
+  Andrey Santos), batch-4 (+12: Collyer, Jack Fletcher, Tyler Fletcher,
+  Lacey, JJ Gabriel, Tynan Thompson, Tah, Ito, Pavlovic (qualified — bare
+  collides with Strahinja Pavlović/Milan), Lennart Karl (qualified),
+  Cardozo, Assomo). club 88, country 46, subcat 29, normalize 34/30.
+  All add_only.
+- Forecast parity confirmed live 3x (club 25=25 exact; batch-2 78->0;
+  batch-3 106->0). Batch-4 forecast 8 fills (Tah 4, Ito 3, Pavlovic 1,
+  hand-checked correct players) — confirms at next 06:00 sync.
+- Rule-change workflow: delta JSON -> audit.py --forecast (review fill rows
+  for bare keywords) -> make_paste_lists.py / audit.py --build-patch
+  (refuses on collision/duplicate/stale-export/choice-cap; cache >24h WARN)
+  -> paste both .txt into the task -> re-export -> make_task_configs.py.
+
+## Normalize pipeline (orphan repair — NEW)
+- Orphans are filled-with-variant values; add_only rules never fix them.
+  build_patch emits orphan-normalize.csv (review) + orphan-normalize.json
+  ({handle, expected_current, set_to}) — the payload for the player-filter
+  normalize Mechanic task (collections chat's lane; recommend the task
+  skip-and-log when stored != expected_current). The operator never
+  file-imports; all store writes go through Mechanic.
+- Pending: run the batch-4 patch's normalize payload (~19 of 70 orphans
+  self-cleared by new canonicals; ~35 variant rows via the task).
 
 ## Collections state
-- Metafield tier DONE by the collections chat: 56 collections (37 club,
-  16 country, 3 player) on additive rules via Mechanic task 07a010f6,
-  double-verified. Their new apply-task consumes
-  condition_spec {kind:"type"|"tag"|"metafield", value, [namespace,key]}.
-- Audit now classifies tiers 1+2: AUTOMATABLE=28 (13 whole_type, 13 subcat,
-  2 metafield: Everton, San Jose), COLOUR_VERIFY=11, REVIEW=80. Payload
-  file collection-rules-payload-<stamp>.json is TASK-READY (28 entries,
-  run audit-20261001-0323). Compound metafield+type rules are skipped from
-  the payload by design (never widened); xlsx keeps them.
-- NEXT STORE ACTION (collections chat's lane): apply the 28-rule tranche.
-  Recommended order: zero-add pilot (Keychains 0, Ball Pumps 0, San Jose 0,
-  Slides +1 — proves all 3 kinds) → Soccer Jerseys (+427 on 14,355, biggest
-  blast radius) → rest. Verify each step with a fresh
-  collections_audit --members run (counts ≥ before, no RULE_LOST, applied
-  rows leave the Ready sheet).
-- Colour tier (11) stays human-gated; 'red'⊂'Predator' substring trap.
+- 81 automated (56 metafield tier + 25 tranche: 12 type, 11 tag, 2
+  metafield). 772 ruled in store. Holds closed KEEP_MANUAL: Backpacks
+  (type=Bags over-pulls: gymsacks/duffels; nav label says "Bags &
+  Backpacks" — merchant call parked), Premium Match Balls (curated subset
+  of Official; a Ball-Match rule would dissolve it), Collectibles
+  (fallback-tag bucket). Colour tier 11 parked ('red' in 'Predator' trap).
+  REVIEW 80.
+- Validation (shipped): type/tag/metafield rule values checked each run —
+  casefolded (JERSEYS and Sale were case mismatches, cleared);
+  per-definition vocab for custom.<filter> values. Real finding standing:
+  Fabian Johnson rule on dead tag player_fabian-johnson (also
+  ZERO_WITH_RULE) — merchant decision.
+- Departures engine (shipped, LIVE-UNEXERCISED): members cache kept as
+  .prev; on COUNT_DROP the detail gains departed/joined + causes
+  (deleted / still ACTIVE / rule-mismatch / other) + examples, plus
+  collections-departures-<stamp>.csv (still_matches_rule from the
+  collection's own conditions; ALL/ANY honored; unknown relations
+  INCLUDES/CONTAINS/NOT_TAGGED_WITH -> blank, never guessed). Eyeball the
+  first real output.
+- Apply-task flag (pre-tranche guard, parked): its conflict check is
+  same-class only — before applying rules onto already-ruled collections,
+  add a cross-class matchType:ALL guard. All 2026-10 targets were rule-less.
 
-## Audit app changes shipped 2026-10-01 (all committed)
-- collections_audit.py: token-level "soccer" strip for whole-type titles,
-  SubCat tag tier (vocab = config addon list + live SubCat_* tags; unmapped
-  stays REVIEW), subcat in _rule_matches, _payload on candidate rows
-  (stripped from CSV), payload emitted every candidates run.
-- deliverable.py: build_rules_payload + _condition_spec emitting the
-  task-native contract above.
-- passes.py + config.py + audit-ignore.json: FILLED_ACKNOWLEDGED for
-  allow-listed manual values (club: No Club, Elite Sport Institute, Metro
-  Stars, Mutiny) — club now FILLED_ACKNOWLEDGED=26, FILLED_ORPHAN=0.
-- rules.py: choice-list WARN threshold 110→100 (club 88 still INFO).
-- HOW-IT-WORKS §9 records the live forecast confirmation. README gained
-  the FILLED_ACKNOWLEDGED row.
-- Ticket 3 items NOT implemented on purpose: #1 surname memo (decided +
-  shipped), #2 reason codes (already in source), #5 variant metafields
-  (documented ignore).
+## App features (all committed through 2026-10-03)
+- Repo layout: configs/ (task-configs.json, audit-ignore.json), deltas/,
+  docs/; .py flat at root. Mirror = GitHub connector; push + resync ritual.
+- history/metrics.jsonl (schema 1, append-only, tracked): per-run products
+  + collections lines — fill %, blank reasons, filled findings, provenance
+  (cached, cache_pulled_at, members_pulled_at, task_configs_date),
+  rule/allowed counts, distinct stored, zero-fill canonicals, subcat sim,
+  addon coverage, vendor, health_by_code, ruled_by_kind, applied_members,
+  memberships. Backfilled to 2026-09-21. python history.py --backfill.
+- runlog.py: console-<stamp>.log per run dir + crash traceback + run
+  separator; groundwork for the (parked) weekly scheduler.
+- Dated baselines: summaries/baselines/, newest 15.
+- FILLED_ACKNOWLEDGED via configs/audit-ignore.json (club sentinels:
+  No Club, Elite Sport Institute, Metro Stars, Mutiny) = 26 steady.
 
-## Expected next fresh Full Audit (after 06:00 player sync)
-- player SYNC_MISS 78 → 0 (batch-2 back-catalog fills), blanks ~237 → ~159,
-  NO_RULE_VALUE → ~143 (James 76 + Rodrigo 67 only), filled-check
-  divergents ~17 (multi-player-title noise class), orphans ~12.
-- club: blanks 13 (Goretzka-class audit-heuristic noise, no store risk),
-  FILLED_ACKNOWLEDGED=26, FILLED_DIVERGENT=12 (merchant fix list).
-- If SYNC_MISS persists after a player-sync run: investigate task runs,
-  not the rules.
+## Expected next fresh products run (after 06:00 player sync)
+- SYNC_MISS 0; the 8 batch-4 blanks filled; player fill % up from 27.0.
+- FILLED_ORPHAN 70 -> ~51 (19 self-clear); after the normalize task run:
+  -> ~18 (the hand-list below). club: ACKNOWLEDGED=26, DIVERGENT=12 steady.
+- If SYNC_MISS persists after a sync: investigate task runs, not rules.
 
-## Merchant lists (pending, unchanged)
-- Player re-tags (12): James, Rodrigo → real names; Estêvão→Estevao,
-  João Pedro→Joao Pedro, Andreas Christensen→Christensen, Jules
-  Koundé→Kounde, Karim Adeyemi→Adeyemi, Anthony Gordon→Gordon, Diogo
-  Dalot→Dalot, Noussair Mazraoui→Mazraoui, Lisandro Martinez→Martinez,
-  Frenkie de Jong→De Jong.
-- Club corrections (12 FILLED_DIVERGENT): stored→predicted per
-  filled-check-club CSV.
+## Merchant items (deliver together)
+- Hand-list, 7 values / ~18 products (merchant names the player):
+  James 1, Rodrigo 1, Santos 3, Brown 3, Bara 4 (club nickname in the
+  player field — clear or move), Karl 3 (-> Lennart Karl?), Pavlović 3
+  (bare stored; qualified keywords can't map it).
+- Duplicate-handle checks before normalizing: ...harry-maguire-away...
+  blue-1 stores Lisandro Martinez; ...kobbie-mainoo-away...blue stores
+  Diogo Dalot — title decides.
+- Tagging convention: use canonical spellings (Rashford, Stanisic) or
+  every wave lands as orphans.
+- 15 wrong stored values from earlier (Pulisic on USA teammates, Saka on
+  Arsenal teammates, Valverde on Uruguay, Modric on Dest, Lozano on
+  Guillermo Martínez -> clear) — normalize-task candidates.
+- Club corrections: 12 FILLED_DIVERGENT per filled-check-club CSV.
+- Fabian Johnson collection: retag products or retire the rule.
 
 ## Parked / known noise (do not re-litigate)
-- Parked: colour tier; compound Title+Type payload support (needs task-side
-  conditions array); Henry-Martín keyword gap (~5, risky vs Kessler);
-  Charly "León" accent gap (1); 4 ZERO_WITH_RULE dead collections;
-  Villareal title typo; Quiñones MULTI_SOURCE; No Club merchant decision;
-  variant-metafield blind spot (On Sale UNKNOWN_RULE_VALUE ×4);
-  notes-persistence; weekly scheduler.
-- Noise classes: Goretzka-class club KEYWORD_GAP; Felix/Brandt/Henry player
-  KEYWORD_GAP; 17 multi-player-title divergents; subcat WILL_REPLACE 3
-  oscillators + UNPREDICTED_EXISTING 7 + 1 Topps tin; country USA-vs-X ×3;
-  benign COUNT_DROPs from unpublished products (baseline re-saves).
+- Parked: colour tier; compound Title+Type payload (task-side conditions
+  array needed); dashboard buttons (build-patch picker, history trend);
+  weekly scheduler; ROLE doc rewrite; Backpacks merchant call;
+  README.md:3 "Matrixify export loop" line (accurate, optional reword);
+  Henry-Martín kw (~5, risky vs Kessler); Charly "León" accent (1);
+  4 ZERO_WITH_RULE dead collections; Villareal title typo; Quiñones
+  MULTI_SOURCE; On Sale UNKNOWN_RULE_VALUE x4 (variant metafields,
+  documented ignore); notes-persistence.
+- Noise classes: Goretzka-class club KEYWORD_GAP (13); Felix/Brandt/Henry/
+  Merino player KEYWORD_GAP (16); ~17 multi-player-title divergents;
+  subcat sim MISSING 1 / WILL_REPLACE ~1-3 / UNPREDICTED 8; country
+  USA-vs-X x3; benign COUNT_DROP churn (departures engine now explains
+  real ones when .prev exists).

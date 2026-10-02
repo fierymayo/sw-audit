@@ -161,6 +161,9 @@ def build_patch(delta_path, handle, cached=False, remove=(), log=print):
 
     if not os.path.exists(config.CACHE_PRODUCTS_JSONL):
         sys.exit("No products cache — run a products audit first, then retry.")
+    age_h = (config.now().timestamp() - os.path.getmtime(config.CACHE_PRODUCTS_JSONL)) / 3600
+    if age_h > 24:
+        log(f"  WARN: products cache is {age_h:.0f}h old — forecast and orphan rows reflect it.")
     products = load_products(config.CACHE_PRODUCTS_JSONL)
     filter_key = next(k for k, h in FILTER_HANDLES if h == handle)
     patched_compiled = compile_rules(rules)
@@ -193,6 +196,13 @@ def build_patch(delta_path, handle, cached=False, remove=(), log=print):
         for handle_, cur, new in sorted(orphan_rows):
             fh.write(f"{handle_},\"{cur}\",\"{new}\"\n")
     log(f"wrote {orphan_path}  ({len(orphan_rows)} row(s))")
+    if orphan_rows:
+        payload = [{"handle": h, "expected_current": cur, "set_to": new}
+                   for h, cur, new in sorted(orphan_rows)]
+        jpath = os.path.join(out_dir, "orphan-normalize.json")
+        with open(jpath, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=2, ensure_ascii=False)
+        log(f"wrote {jpath}  ({len(payload)} entrie(s) for the normalize Mechanic task)")
 
     if handle in ("club", "country") and added:
         choices_path = os.path.join(out_dir, "definition-choices-to-add.txt")
@@ -216,8 +226,8 @@ def build_patch(delta_path, handle, cached=False, remove=(), log=print):
         for name in removed:
             fh.write(f"- REMOVED {name}\n")
         if orphan_rows:
-            fh.write(f"\norphan-normalize.csv: {len(orphan_rows)} stored value(s) "
-                     f"to align via Matrixify import\n")
+            fh.write(f"\norphan-normalize.json: {len(orphan_rows)} stored value(s) "
+                     f"to align via the player-filter normalize Mechanic task\n")
     log(f"wrote {summary_path}")
     log(f"{handle}: {n_before} -> {len(rules)} rules"
         + (f", {len(allowed_before)} -> {len(allowed)} allowed values" if allowed_before else ""))

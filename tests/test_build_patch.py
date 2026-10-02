@@ -126,6 +126,9 @@ class BuildPatchTests(unittest.TestCase):
         self.assertIn('h5,"Harry Maguire","Maguire"', body)
         self.assertIn('h7,"Diogo Dalot","Dalot"', body)
         self.assertEqual(len(body), 2)  # acknowledged "No Player" excluded
+        payload = json.load(open(os.path.join(out, "orphan-normalize.json")))
+        self.assertIn({"handle": "h5", "expected_current": "Harry Maguire",
+                       "set_to": "Maguire"}, payload)
 
     def test_forecast_counts_in_summary(self):
         out = self._build(GOOD_DELTA)
