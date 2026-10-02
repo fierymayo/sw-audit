@@ -142,7 +142,7 @@ def build_patch(delta_path, handle, cached=False, remove=(), log=print):
         if n >= 100:
             log(f"  WARN: {handle} allowed_values at {n}/{CLUB_CHOICE_LIST_CAP} choice-list cap.")
 
-    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
+    stamp = config.now().strftime("%Y%m%d-%H%M")
     out_dir = os.path.join(config.paste_dir(), f"{handle}-{stamp}")
     os.makedirs(out_dir, exist_ok=True)
 

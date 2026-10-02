@@ -64,6 +64,8 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         sys.exit(f"No cached JSONL at {config.CACHE_PRODUCTS_JSONL}. Run without --cached first.")
 
     log("Loading products...")
+    if not os.path.exists(config.CACHE_PRODUCTS_JSONL):
+        sys.exit("No products cache — run a products audit first, then retry.")
     products = load_products(config.CACHE_PRODUCTS_JSONL)
     log(f"  {len(products):,} products")
 
