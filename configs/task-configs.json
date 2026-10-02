@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "generated_at": "2026-10-03T02:27:58+05:00",
+    "generated_at": "2026-10-03T04:34:53+05:00",
     "sources": [
       "32fa6df3-2648-48ca-a848-95c8a947757a.json",
       "3d13ffef-2101-455b-a940-54eeb7f4f7d0.json",
@@ -2315,6 +2315,83 @@
         "safe_keywords": [
           "andrey santos"
         ]
+      },
+      {
+        "canonical_value": "Collyer",
+        "safe_keywords": [
+          "toby collyer",
+          "collyer"
+        ]
+      },
+      {
+        "canonical_value": "Jack Fletcher",
+        "safe_keywords": [
+          "jack fletcher"
+        ]
+      },
+      {
+        "canonical_value": "Tyler Fletcher",
+        "safe_keywords": [
+          "tyler fletcher"
+        ]
+      },
+      {
+        "canonical_value": "Lacey",
+        "safe_keywords": [
+          "shea lacey",
+          "lacey"
+        ]
+      },
+      {
+        "canonical_value": "JJ Gabriel",
+        "safe_keywords": [
+          "jj gabriel"
+        ]
+      },
+      {
+        "canonical_value": "Tynan Thompson",
+        "safe_keywords": [
+          "tynan thompson"
+        ]
+      },
+      {
+        "canonical_value": "Tah",
+        "safe_keywords": [
+          "jonathan tah",
+          "tah"
+        ]
+      },
+      {
+        "canonical_value": "Ito",
+        "safe_keywords": [
+          "hiroki ito",
+          "ito"
+        ]
+      },
+      {
+        "canonical_value": "Pavlovic",
+        "safe_keywords": [
+          "aleksandar pavlovic",
+          "aleksandar pavlović"
+        ]
+      },
+      {
+        "canonical_value": "Lennart Karl",
+        "safe_keywords": [
+          "lennart karl"
+        ]
+      },
+      {
+        "canonical_value": "Cardozo",
+        "safe_keywords": [
+          "cardozo"
+        ]
+      },
+      {
+        "canonical_value": "Assomo",
+        "safe_keywords": [
+          "assomo"
+        ]
       }
     ],
     "allowed_values": [
@@ -2531,7 +2608,19 @@
       "Bischof",
       "Stanisic",
       "Saibari",
-      "Andrey Santos"
+      "Andrey Santos",
+      "Collyer",
+      "Jack Fletcher",
+      "Tyler Fletcher",
+      "Lacey",
+      "JJ Gabriel",
+      "Tynan Thompson",
+      "Tah",
+      "Ito",
+      "Pavlovic",
+      "Lennart Karl",
+      "Cardozo",
+      "Assomo"
     ],
     "metafield_key": "player_filter"
   },
