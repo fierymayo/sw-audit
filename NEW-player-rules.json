@@ -1,0 +1,14 @@
+[
+  { "canonical_value": "Maguire", "safe_keywords": ["harry maguire", "maguire"] },
+  { "canonical_value": "Upamecano", "safe_keywords": ["dayot upamecano", "upamecano"] },
+  { "canonical_value": "Laimer", "safe_keywords": ["konrad laimer", "laimer"] },
+  { "canonical_value": "Ugarte", "safe_keywords": ["manuel ugarte", "ugarte"] },
+  { "canonical_value": "Tielemans", "safe_keywords": ["youri tielemans", "tielemans"] },
+  { "canonical_value": "Boey", "safe_keywords": ["sacha boey", "boey"] },
+  { "canonical_value": "Kim Min-jae", "safe_keywords": ["minjae kim", "kim min-jae", "min-jae", "minjae"] },
+  { "canonical_value": "Bischof", "safe_keywords": ["tom bischof", "bischof"] },
+  { "canonical_value": "Stanisic", "safe_keywords": ["josip stanišić", "josip stanisic", "stanišić", "stanisic"] },
+  { "canonical_value": "Saibari", "safe_keywords": ["ismael saibari", "saibari"] },
+  { "canonical_value": "Andrey Santos", "safe_keywords": ["andrey santos"] },
+  { "canonical_value": "Sesko", "add_keywords": ["šeško", "benjamin sesko", "benjamin šeško"] }
+]
