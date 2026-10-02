@@ -169,7 +169,8 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
             zero_fill[fk] = len(canon - set(stored_counts[fk]))
     extra = {"cached": cached,
              "cache_pulled_at": datetime.datetime.fromtimestamp(
-                 os.path.getmtime(config.CACHE_PRODUCTS_JSONL)).isoformat(timespec="seconds"),
+                 os.path.getmtime(config.CACHE_PRODUCTS_JSONL),
+                 tz=config.STAMP_TZ).isoformat(timespec="seconds"),
              "task_configs_date": (cfg or {}).get("_meta", {}).get("file_date"),
              "distinct_stored": {fk: len(c) for fk, c in stored_counts.items()},
              "zero_fill_canonicals": zero_fill,

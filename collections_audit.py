@@ -561,7 +561,8 @@ def pipeline(cached=False, force=False, members_pull=False, deliverable=False, s
                     break
     extra = {"cached": cached,
              "cache_pulled_at": datetime.datetime.fromtimestamp(
-                 os.path.getmtime(config.CACHE_COLLECTIONS_JSONL)).isoformat(timespec="seconds"),
+                 os.path.getmtime(config.CACHE_COLLECTIONS_JSONL),
+                 tz=config.STAMP_TZ).isoformat(timespec="seconds"),
              "task_configs_date": (cfg or {}).get("_meta", {}).get("file_date"),
              "health_by_code": dict(Counter(r["finding"] for r in health)),
              "ruled_by_kind": dict(ruled_kinds),
