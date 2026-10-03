@@ -64,8 +64,11 @@ def load_products(jsonl_path):
                 mf_by_parent[parent][obj["key"]] = obj.get("value") or ""
     for gid, p in products.items():
         mfs = mf_by_parent.get(gid, {})
+        raw = {}
         for k in FILTERS:
-            p[k] = (mfs.get(k) or "").strip()
+            raw[k] = mfs.get(k) or ""
+            p[k] = raw[k].strip()
+        p["_raw"] = raw
         p["_mf"] = mfs
         p["_tags_lc"] = [t.lower() for t in p["tags"]]
     return list(products.values())

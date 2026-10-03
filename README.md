@@ -106,6 +106,7 @@ Active products where the filter is already filled, run through the same task ma
 | FILLED_ORPHAN | Stored value is not any rule canonical for that filter (per-value counts also land in the summary JSON under `filled_orphans`). One row per product; `predicted_value` shows what the matcher would say, if anything | Decide: add a rule, or leave the manual value |
 | FILLED_DIVERGENT | Stored value is a valid canonical, but the matcher predicts a different one. Tasks are `add_only` and will never change a filled value | Info only |
 | FILLED_ACKNOWLEDGED | Stored value is on the configs/audit-ignore.json allow-list (known manual/sentinel values like `No Club`). Excluded from orphan counts | None |
+| FILLED_WHITESPACE | Stored value equals a canonical except leading/trailing whitespace — collection metafield rules and storefront filters miss it. Emitted to orphan-normalize for repair | Normalize task |
 
 No finding when the matcher predicts nothing or agrees.
 
@@ -121,5 +122,7 @@ No finding when the matcher predicts nothing or agrees.
 ## Paste-ready patch builder
 
 `python make_paste_lists.py NEW-rules.json <filter> [--cached] [--remove "<canonical>"]` (or `python audit.py --build-patch NEW-rules.json --filter <filter>`) merges a vetted delta into paste-ready task options and writes them to `output/paste/<filter>-<stamp>/`: full `keyword_rules_json.txt` / `allowed_values_json.txt`, a `patch-summary.md` with NEW vs EXTENDED and the forecast fills, an `orphan-normalize.csv` review list plus `orphan-normalize.json` — the payload the operator pastes into the player-filter normalize Mechanic task — for stored variants of patched canonicals, and `definition-choices-to-add.txt` for club/country. It refuses on COLLISION_EXISTING, DUPLICATE_IN_DELTA, a task export newer than `configs/task-configs.json`, or a club/country choice list over the 128 cap (warn at 100).
+
+Standing procedure for the orphan rows: `orphan-normalize.json` is the payload for the Mechanic task **"Normalize a product metafield by handle (compare-and-swap)"** (id `204d9b6e-7c72-4f89-9f4d-ef4a85136134`). Each entry carries `expected_current`, so the task refuses a row whose stored value changed since the patch was built. The operator runs it in test mode, then live, then the next audit verifies.
 
 It uses the cached catalog and touches the network only if the cache is missing (and `--cached` is not given).

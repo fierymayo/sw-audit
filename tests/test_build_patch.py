@@ -121,10 +121,10 @@ class BuildPatchTests(unittest.TestCase):
     def test_orphan_normalize_csv(self):
         out = self._build(GOOD_DELTA)
         lines = open(os.path.join(out, "orphan-normalize.csv")).read().splitlines()
-        self.assertIn("Metafield: custom.player_filter [single_line_text_field]", lines[0])
+        self.assertEqual(lines[0], "Handle,current_value,set_to,has_whitespace")
         body = set(lines[1:])
-        self.assertIn('h5,"Harry Maguire","Maguire"', body)
-        self.assertIn('h7,"Diogo Dalot","Dalot"', body)
+        self.assertIn('h5,"Harry Maguire","Maguire",no', body)
+        self.assertIn('h7,"Diogo Dalot","Dalot",no', body)
         self.assertEqual(len(body), 2)  # acknowledged "No Player" excluded
         payload = json.load(open(os.path.join(out, "orphan-normalize.json")))
         self.assertIn({"handle": "h5", "expected_current": "Harry Maguire",

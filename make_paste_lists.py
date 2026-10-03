@@ -179,22 +179,29 @@ def build_patch(delta_path, handle, cached=False, remove=(), log=print):
     patched_canonicals = {(r.get("canonical_value") or "").strip() for r in rules}
     ok_values = {v.strip() for v in (_audit_ignores().get("filled_orphans_ok") or {})
                  .get(filter_key) or []}
-    mf_col = f"Metafield: custom.{filter_key} [single_line_text_field]"
     orphan_rows = []
     for p in products:
         if p["status"] != "ACTIVE":
             continue
         stored = p[filter_key]
-        if not stored or stored in patched_canonicals or stored in ok_values:
+        if not stored or stored in ok_values:
             continue
-        set_to, _amb = match_title(stored, patched_compiled)
-        if set_to:
-            orphan_rows.append((p["handle"], stored, set_to))
+        raw = p.get("_raw", {}).get(filter_key, stored)
+        if stored in patched_canonicals:
+            if raw == stored:
+                continue
+            set_to = stored
+        else:
+            set_to, _amb = match_title(stored, patched_compiled)
+            if not set_to:
+                continue
+        orphan_rows.append((p["handle"], raw, set_to))
     orphan_path = os.path.join(out_dir, "orphan-normalize.csv")
     with open(orphan_path, "w", encoding="utf-8", newline="") as fh:
-        fh.write(f"Handle,current_value,{mf_col}\n")
+        fh.write("Handle,current_value,set_to,has_whitespace\n")
         for handle_, cur, new in sorted(orphan_rows):
-            fh.write(f"{handle_},\"{cur}\",\"{new}\"\n")
+            ws = "yes" if cur != cur.strip() else "no"
+            fh.write(f"{handle_},\"{cur}\",\"{new}\",{ws}\n")
     log(f"wrote {orphan_path}  ({len(orphan_rows)} row(s))")
     if orphan_rows:
         payload = [{"handle": h, "expected_current": cur, "set_to": new}

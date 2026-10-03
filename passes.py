@@ -152,20 +152,24 @@ def pass_filled_check(products, cfg):
             stored = p[filter_key]
             if not stored:
                 continue
+            raw = p.get("_raw", {}).get(filter_key, stored)
             predicted, _ambiguous = match_title(p["title"], compiled)
-            if stored not in canonicals:
+            if raw != stored and stored in canonicals:
+                finding = "FILLED_WHITESPACE"
+                predicted = stored
+            elif stored not in canonicals:
                 if stored in ok_values:
                     finding = "FILLED_ACKNOWLEDGED"
                 else:
                     finding = "FILLED_ORPHAN"
-                    counts[stored] += 1
+                    counts[raw] += 1
             elif predicted and predicted != stored:
                 finding = "FILLED_DIVERGENT"
             else:
                 continue
             rows.append({
                 "handle": p["handle"], "title": p["title"], "filter": filter_key,
-                "finding": finding, "stored_value": stored, "predicted_value": predicted or "",
+                "finding": finding, "stored_value": raw, "predicted_value": predicted or "",
                 "admin_url": config.admin_product_url(p["id"]),
                 "storefront_url": config.storefront_product_url(p["handle"]),
             })

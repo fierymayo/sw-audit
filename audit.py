@@ -161,7 +161,8 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
     health_status = ("ATTENTION — " + "  ".join(attention)) if attention else "OK"
     log("  HEALTH: " + health_status)
     actives = [p for p in products if p["status"] == "ACTIVE"]
-    stored_counts = {fk: Counter(p[fk] for p in actives if p[fk]) for fk, _h in FILTER_HANDLES}
+    stored_counts = {fk: Counter(p.get("_raw", {}).get(fk, p[fk]) for p in actives if p[fk])
+                     for fk, _h in FILTER_HANDLES}
     zero_fill = {}
     for fk, handle in FILTER_HANDLES:
         canon = ((cfg or {}).get(handle) or {}).get("_canonicals") or set()

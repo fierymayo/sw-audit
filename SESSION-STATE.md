@@ -28,8 +28,11 @@ it at the next handoff.
   normalize Mechanic task (collections chat's lane; recommend the task
   skip-and-log when stored != expected_current). The operator never
   file-imports; all store writes go through Mechanic.
-- Pending: run the batch-4 patch's normalize payload (~19 of 70 orphans
-  self-cleared by new canonicals; ~35 variant rows via the task).
+- Batch-4 normalize RUN LIVE 2026-10-03: 34/35 written via task
+  204d9b6e-7c72-4f89-9f4d-ef4a85136134 (CAS by handle), 1 refused
+  correctly: "Minjae " trailing space = the Ticket-5 loader bug, now fixed
+  (p["_raw"] exact bytes + FILLED_WHITESPACE finding). The next build_patch
+  emits the exact-bytes follow-up row.
 
 ## Collections state
 - 81 automated (56 metafield tier + 25 tranche: 12 type, 11 tag, 2
@@ -72,8 +75,10 @@ it at the next handoff.
 
 ## Expected next fresh products run (after 06:00 player sync)
 - SYNC_MISS 0; the 8 batch-4 blanks filled; player fill % up from 27.0.
-- FILLED_ORPHAN 70 -> ~51 (19 self-clear); after the normalize task run:
-  -> ~18 (the hand-list below). club: ACKNOWLEDGED=26, DIVERGENT=12 steady.
+- FILLED_ORPHAN 70 -> ~17-18 (normalize wrote 34; residual = hand-list +
+  "Minjae "). FILLED_WHITESPACE is its own count now (canonical values with
+  stray whitespace, previously invisible). club: ACKNOWLEDGED=26,
+  DIVERGENT=12 steady.
 - If SYNC_MISS persists after a sync: investigate task runs, not rules.
 
 ## Merchant items (deliver together)
