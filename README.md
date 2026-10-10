@@ -80,6 +80,7 @@ Per-run reports land in `output/runs/audit-<stamp>/`; catalog caches in `output/
 | `collections-candidates-*.csv` | Manual collections classified AUTOMATABLE / REVIEW / KEEP_MANUAL with a suggested additive rule |
 | `audit-report-*.pdf` | Merchant-facing summary (`--pdf`, needs reportlab) |
 | `subcat-sim-*.csv` | Predicted vs actual SubCat tags (task-logic simulation): MISSING_SUBCAT / WILL_REPLACE / UNPREDICTED_EXISTING, with eligibility columns |
+| `channel-checks-<stamp>.csv` | Channel-consistency findings (CHANNEL_* codes, see below), in its run dir |
 | `console-<stamp>.log` | Full console + traceback of each run, in its run dir |
 | `history/metrics.jsonl` | append-only run metrics, one JSON line per run; seed/extend with `python history.py --backfill` |
 | `Collections-to-Automate-*.xlsx` / `.pdf` | Merchant deliverable: Ready-to-Automate + Needs-Review sheets with Adds / Count After and Approve column |
@@ -109,6 +110,31 @@ Active products where the filter is already filled, run through the same task ma
 | FILLED_WHITESPACE | Stored value equals a canonical except leading/trailing whitespace — collection metafield rules and storefront filters miss it. Emitted to orphan-normalize for repair | Normalize task |
 
 No finding when the matcher predicts nothing or agrees.
+
+## Channel consistency checks (channel-checks CSVs)
+
+Active products checked against the rebuilt Mechanic publishers (Unpublish out-of-stock, Publish
+back-in-stock). Section A runs on every products run. Section B needs `read_publications` on the
+custom app — `audit.py` probes for it at pull time and pulls `resourcePublications` only when it is
+granted; without it the section-B codes are skipped and the console says so. Marker codes fire only
+when the same product is still pending in a fresh audit taken at least 20h after the previous fresh
+audit; `--cached` runs never advance this state.
+
+| Finding | Section | Meaning |
+|---|---|---|
+| CHANNEL_SELLABLE_OFF_STORE | A | Product is sellable (a variant is untracked, CONTINUE, or has stock) but has no Online Store URL — back-in-stock should have restored it |
+| CHANNEL_ADDON_OFF_STORE | A | An `addon-eligible` product is off the Online Store; add-ons are excluded from unpublishing by design |
+| CHANNEL_STALE_TIMESTAMP | A | Product is sellable but still carries `mechanic.out_of_stock_at` — the timestamp should be cleared on restock, or the grace period is skipped on the next dip |
+| CHANNEL_OVER_250_VARIANTS | A | More variants than the publisher task fetches, so the task left it published unjudged — review by hand |
+| CHANNEL_MARKER_UNPARSEABLE | A | `mechanic.unpublished_by_task` is not a JSON list of publication ids |
+| CHANNEL_MARKER_ON_STORE_ALL | A | Product carries an unpublish marker yet is back on the Online Store; the marker should have been cleared (2nd consecutive fresh audit) |
+| CHANNEL_GOOGLE_WITHOUT_STORE | B | Published on Google & YouTube with no Online Store URL — the Merchant Center failure class |
+| CHANNEL_MARKER_MISMATCH | B | Marker disagrees with live publications: channels it claims to have removed are published, or a sellable product is still missing them (2nd consecutive fresh audit) |
+| CHANNEL_OOS_ON_GOOGLE_PAST_THRESHOLD | B | Out of stock past days-to-wait + cadence, still on Google & YouTube |
+
+`CHANNEL_GOOGLE_WITHOUT_STORE` and `CHANNEL_OVER_250_VARIANTS` raise the run's HEALTH line to
+ATTENTION. Thresholds come from `channel_tasks` in task-configs.json when present, else
+`addon-eligible` / 5 days / every 3rd day.
 
 ## Rule-delta forecast
 

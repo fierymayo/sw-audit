@@ -111,3 +111,16 @@ it at the next handoff.
   subcat sim MISSING 1 / WILL_REPLACE ~1-3 / UNPREDICTED 8; country
   USA-vs-X x3; benign COUNT_DROP churn (departures engine now explains
   real ones when .prev exists).
+
+## Channel consistency (2026-10-11)
+- Rebuilt Mechanic tasks live: Unpublish OOS 9ed61d2e-..., Back-in-stock
+  a481e948-... (old fa11f4a5/dbfb4d2f disabled; their exports were never in
+  task-exports/, so nothing was archived). Managed channels: Online Store +
+  Google & YouTube; addon-eligible excluded.
+- sw-audit now checks channel state every products run: CHANNEL_* codes in
+  channel-checks-<stamp>.csv + history "channel" block. Section B
+  (Google-vs-Store, the 2,884-product Merchant Center failure class) turns
+  on automatically once read_publications is granted on the custom app;
+  until then the pull and checks degrade cleanly.
+- Go-live baselines (Oct 11): 1,080 restored to store, 1,584 stale
+  timestamps cleared, 2,172 removed from Google.

@@ -5,3 +5,4 @@ __pycache__/
 task-exports/*.json
 task-exports/*.txt
 !task-exports/README.txt
+mechanic-task-log.json

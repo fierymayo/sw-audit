@@ -4,11 +4,9 @@ from collections import defaultdict
 
 FILTERS = ["club_filter", "country_filter", "player_filter", "tournament_filter"]
 
-PRODUCTS_BULK_QUERY = '''
-{
-  products {
-    edges {
-      node {
+MF_NAMESPACES = ("custom", "mechanic")
+
+_PRODUCT_FIELDS = '''
         id
         handle
         title
@@ -18,13 +16,48 @@ PRODUCTS_BULK_QUERY = '''
         status
         createdAt
         updatedAt
-        metafields(namespace: "custom") {
-          edges { node { key value } }
+        onlineStoreUrl
+        publishedAt
+        metafields {
+          edges { node { namespace key value } }
+        }
+        variants {
+          edges {
+            node {
+              id
+              inventoryQuantity
+              inventoryPolicy
+              inventoryItem { tracked }
+            }
+          }
+        }'''
+
+PRODUCTS_BULK_QUERY = '''
+{
+  products {
+    edges {
+      node {%s
+      }
+    }
+  }
+}''' % _PRODUCT_FIELDS
+
+PRODUCTS_BULK_QUERY_PUBS = '''
+{
+  products {
+    edges {
+      node {%s
+        resourcePublications {
+          edges {
+            node {
+              publication { id }
+            }
+          }
         }
       }
     }
   }
-}'''
+}''' % _PRODUCT_FIELDS
 
 
 def _parse_dt(value):
@@ -39,6 +72,8 @@ def _parse_dt(value):
 def load_products(jsonl_path):
     products = {}
     mf_by_parent = defaultdict(dict)
+    var_by_parent = defaultdict(lambda: [0, False])
+    pubs_by_parent = defaultdict(set)
     with open(jsonl_path, "r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -59,9 +94,23 @@ def load_products(jsonl_path):
                     "status": obj.get("status", "") or "",
                     "created_at": _parse_dt(obj.get("createdAt")),
                     "updated_at": _parse_dt(obj.get("updatedAt")),
+                    "online_store_url": obj.get("onlineStoreUrl") or "",
+                    "published_at": obj.get("publishedAt") or "",
                 }
             elif parent and "key" in obj:
-                mf_by_parent[parent][obj["key"]] = obj.get("value") or ""
+                if obj.get("namespace", "custom") in MF_NAMESPACES:
+                    mf_by_parent[parent][obj["key"]] = obj.get("value") or ""
+            elif parent and oid.startswith("gid://shopify/ProductVariant/"):
+                agg = var_by_parent[parent]
+                agg[0] += 1
+                tracked = (obj.get("inventoryItem") or {}).get("tracked")
+                if (tracked is False or obj.get("inventoryPolicy") == "CONTINUE"
+                        or (obj.get("inventoryQuantity") or 0) > 0):
+                    agg[1] = True
+            elif parent and "publication" in obj:
+                pub = (obj.get("publication") or {}).get("id")
+                if pub:
+                    pubs_by_parent[parent].add(pub)
     for gid, p in products.items():
         mfs = mf_by_parent.get(gid, {})
         raw = {}
@@ -71,4 +120,6 @@ def load_products(jsonl_path):
         p["_raw"] = raw
         p["_mf"] = mfs
         p["_tags_lc"] = [t.lower() for t in p["tags"]]
+        p["variants_n"], p["sellable"] = var_by_parent.get(gid, (0, False))
+        p["_pubs"] = pubs_by_parent.get(gid, set())
     return list(products.values())

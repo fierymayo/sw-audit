@@ -23,9 +23,10 @@ import config
 import history
 import report
 import runlog
-from catalog import FILTERS, PRODUCTS_BULK_QUERY, load_products
-from passes import (FORECAST_ROW_FIELDS, blanks_reason_counts, pass_addon_coverage,
-                    pass_filled_check, pass_filter_blanks, pass_fill_rates, pass_forecast,
+from catalog import FILTERS, PRODUCTS_BULK_QUERY, PRODUCTS_BULK_QUERY_PUBS, load_products
+from passes import (CHANNEL_ROW_FIELDS, FORECAST_ROW_FIELDS, blanks_reason_counts,
+                    pass_addon_coverage, pass_channel_checks, pass_filled_check,
+                    pass_filter_blanks, pass_fill_rates, pass_forecast,
                     pass_no_rule_candidates, pass_vendor_audit, EVIDENCE_ROW_FIELDS,
                     SURNAME_BUCKET_FIELDS, pass_entity_evidence, pass_surname_buckets)
 from rules import FILTER_HANDLES, config_lint, load_task_rules
@@ -38,10 +39,31 @@ def _log_lint(findings, log):
         log(f"  [{f['level']}] {f['area']}: {f['message']}")
 
 
+def _publications_readable(client, log):
+    try:
+        data = client._gql('{ publications(first: 20, catalogType: APP) '
+                           '{ nodes { id catalog { title } } } }')
+        pubs = {(n.get("catalog") or {}).get("title") or "": n["id"]
+                for n in data["publications"]["nodes"]}
+        with open(os.path.join(config.summaries_dir(), "publications.json"),
+                  "w", encoding="utf-8") as fh:
+            json.dump(pubs, fh, indent=2, ensure_ascii=False)
+        return True
+    except Exception as exc:
+        log(f"  publications probe: {type(exc).__name__} — treating scope as not granted.")
+        return False
+
+
 def _fetch_products(force, log):
     client = ShopifyBulk(config.SHOP_DOMAIN, get_admin_token(log), config.API_VERSION)
+    query = PRODUCTS_BULK_QUERY
+    if _publications_readable(client, log):
+        query = PRODUCTS_BULK_QUERY_PUBS
+        log("  read_publications granted — pulling channel state (section B on).")
+    else:
+        log("  read_publications not granted — section B channel checks skipped.")
     log("Kicking off products bulk operation...")
-    client.run_to_file(PRODUCTS_BULK_QUERY, config.CACHE_PRODUCTS_JSONL, force=force, log=log)
+    client.run_to_file(query, config.CACHE_PRODUCTS_JSONL, force=force, log=log)
 
 
 def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=None, stamp=None, log=print):
@@ -158,6 +180,16 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         attention.append(f"addon_missing={len(coverage['missing_tag'])}")
     if errors:
         attention.append(f"lint_errors={len(errors)}")
+    ch_rows, ch_counts, pubs_available = pass_channel_checks(products, cfg, fresh=not cached)
+    if ch_rows:
+        report.write_rows_csv(os.path.join(config.run_dir(stamp), f"channel-checks-{stamp}.csv"),
+                              ch_rows, CHANNEL_ROW_FIELDS)
+    log("  channel checks: " + ("  ".join(f"{k.replace('CHANNEL_', '')}={v}"
+                                          for k, v in sorted(ch_counts.items())) or "all clear")
+        + ("" if pubs_available else "  (section B skipped — no publication data in cache)"))
+    for code in ("CHANNEL_GOOGLE_WITHOUT_STORE", "CHANNEL_OVER_250_VARIANTS"):
+        if ch_counts.get(code):
+            attention.append(f"{code}={ch_counts[code]}")
     health_status = ("ATTENTION — " + "  ".join(attention)) if attention else "OK"
     log("  HEALTH: " + health_status)
     actives = [p for p in products if p["status"] == "ACTIVE"]
@@ -177,7 +209,9 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
              "zero_fill_canonicals": zero_fill,
              "blank_type": sum(1 for p in actives if not p["type"]),
              "vendor": {"distinct": vendors["distinct_vendors_active"],
-                        "findings": len(vendors["rows"])}}
+                        "findings": len(vendors["rows"])},
+             "channel": ch_counts,
+             "channel_b": pubs_available}
     if cfg:
         extra["rule_counts"] = {
             "club": len((cfg.get("club") or {}).get("keyword_rules") or []),

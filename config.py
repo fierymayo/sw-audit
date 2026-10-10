@@ -69,6 +69,7 @@ TASK_CONFIGS = os.environ.get("TASK_CONFIGS", "configs/task-configs.json")
 AUDIT_IGNORE = "configs/audit-ignore.json"
 HISTORY_DIR = "history"
 METRICS_JSONL = os.path.join(HISTORY_DIR, "metrics.jsonl")
+CHANNEL_STATE = os.path.join(OUT_DIR, "summaries", "channel-state.json")
 SYNC_LAG_HOURS = int(os.environ.get("SYNC_LAG_HOURS", "48"))
 
 

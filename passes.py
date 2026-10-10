@@ -134,6 +134,118 @@ def _audit_ignores():
         return {}
 
 
+CHANNEL_ROW_FIELDS = ["handle", "title", "finding", "detail", "sellable",
+                      "variants_n", "online_store_url", "admin_url"]
+
+STORE_PUBLICATION = "gid://shopify/Publication/8553027"
+GOOGLE_PUBLICATION = "gid://shopify/Publication/71930216563"
+
+
+def _channel_params(cfg):
+    ct = (cfg or {}).get("channel_tasks") or {}
+    return {"exclusion_tag": (ct.get("exclusion_tag") or "addon-eligible").lower(),
+            "days_to_wait": ct.get("days_to_wait") or 5,
+            "cadence_days": ct.get("cadence_days") or 3}
+
+
+def _channel_dt(value):
+    try:
+        return datetime.datetime.fromisoformat((value or "").replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _load_channel_state():
+    try:
+        with open(config.CHANNEL_STATE, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
+CHANNEL_STATE_MIN_AGE = datetime.timedelta(hours=20)
+
+
+def pass_channel_checks(products, cfg, now=None, fresh=True):
+    """Channel-consistency checks for the rebuilt unpublish/back-in-stock
+    tasks. Marker codes fire only when the same product is pending in two
+    consecutive audits. Section B (Google state) runs only when the cache
+    carries publication rows (read_publications granted at pull time)."""
+    params = _channel_params(cfg)
+    now = now or config.now()
+    pubs_available = any(p.get("_pubs") for p in products)
+    state = _load_channel_state()
+    saved_at = _channel_dt(state.get("saved_at"))
+    state_aged = (bool(state.get("fresh")) and saved_at is not None
+                  and (now - saved_at) >= CHANNEL_STATE_MIN_AGE)
+    prev_on_store = set(state.get("marker_on_store") or []) if state_aged else set()
+    prev_mismatch = set(state.get("marker_mismatch") or []) if state_aged else set()
+    pend_on_store, pend_mismatch = set(), set()
+    threshold = datetime.timedelta(days=params["days_to_wait"] + params["cadence_days"])
+    rows, counts = [], Counter()
+
+    def add(p, code, detail=""):
+        counts[code] += 1
+        rows.append({"handle": p["handle"], "title": p["title"], "finding": code,
+                     "detail": detail, "sellable": p.get("sellable", False),
+                     "variants_n": p.get("variants_n", 0),
+                     "online_store_url": p.get("online_store_url", ""),
+                     "admin_url": config.admin_product_url(p["id"])})
+
+    for p in products:
+        if p["status"] != "ACTIVE":
+            continue
+        addon = params["exclusion_tag"] in p.get("_tags_lc", [])
+        off_store = not p.get("online_store_url")
+        sellable = p.get("sellable", False)
+        mf = p.get("_mf", {})
+        marker_raw = mf.get("unpublished_by_task") or ""
+        marker_pubs = []
+        if marker_raw:
+            try:
+                marker_pubs = [m for m in json.loads(marker_raw) if isinstance(m, str)]
+            except ValueError:
+                add(p, "CHANNEL_MARKER_UNPARSEABLE", marker_raw[:80])
+        if addon and off_store:
+            add(p, "CHANNEL_ADDON_OFF_STORE")
+        elif sellable and off_store:
+            add(p, "CHANNEL_SELLABLE_OFF_STORE")
+        ts_raw = mf.get("out_of_stock_at") or ""
+        if sellable and ts_raw:
+            add(p, "CHANNEL_STALE_TIMESTAMP", ts_raw)
+        if p.get("variants_n", 0) > 250:
+            add(p, "CHANNEL_OVER_250_VARIANTS", str(p["variants_n"]))
+        if marker_pubs and sellable and not off_store:
+            pend_on_store.add(p["gid"])
+            if p["gid"] in prev_on_store:
+                add(p, "CHANNEL_MARKER_ON_STORE_ALL", "persisted across 2 audits")
+        if pubs_available:
+            pubs = p.get("_pubs") or set()
+            on_google = GOOGLE_PUBLICATION in pubs
+            if on_google and off_store:
+                add(p, "CHANNEL_GOOGLE_WITHOUT_STORE")
+            if marker_pubs:
+                already_on = sorted(m for m in marker_pubs if m in pubs)
+                missing = sorted(m for m in marker_pubs if m not in pubs) if sellable else []
+                if already_on or missing:
+                    pend_mismatch.add(p["gid"])
+                    if p["gid"] in prev_mismatch:
+                        add(p, "CHANNEL_MARKER_MISMATCH",
+                            f"already_on={len(already_on)} missing={len(missing)}")
+            ts = _channel_dt(ts_raw)
+            if not sellable and ts and (now - ts) > threshold and on_google:
+                add(p, "CHANNEL_OOS_ON_GOOGLE_PAST_THRESHOLD", ts_raw)
+    keep_baseline = bool(state.get("fresh")) and saved_at is not None and not state_aged
+    if fresh and not keep_baseline:
+        os.makedirs(os.path.dirname(config.CHANNEL_STATE), exist_ok=True)
+        with open(config.CHANNEL_STATE, "w", encoding="utf-8") as fh:
+            json.dump({"marker_on_store": sorted(pend_on_store),
+                       "marker_mismatch": sorted(pend_mismatch),
+                       "fresh": True,
+                       "saved_at": now.isoformat(timespec="seconds")}, fh, indent=2)
+    return rows, dict(counts), pubs_available
+
+
 def pass_filled_check(products, cfg):
     """Filled-value cross-check. None in fallback mode (no rules). One row per
     product/filter; an orphan that also has a prediction stays FILLED_ORPHAN."""
