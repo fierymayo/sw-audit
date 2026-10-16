@@ -147,5 +147,14 @@ class ChannelPassTests(unittest.TestCase):
         self.assertNotIn("CHANNEL_MARKER_ON_STORE_ALL", c2)
 
 
+    def test_truncated_variants_guard(self):
+        p = _prod(1, url="https://x/1", sellable=False, variants_n=100,
+                  pubs=[GOOGLE], mf={"out_of_stock_at": "2026-09-01T00:00:00Z"})
+        p["variants_count"] = 140
+        rows, counts, _ = passes.pass_channel_checks([p], None, now=NOW)
+        self.assertEqual(counts.get("CHANNEL_VARIANTS_TRUNCATED"), 1)
+        self.assertNotIn("CHANNEL_OOS_ON_GOOGLE_PAST_THRESHOLD", counts)
+
+
 if __name__ == "__main__":
     unittest.main()

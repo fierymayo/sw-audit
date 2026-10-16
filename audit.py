@@ -41,10 +41,12 @@ def _log_lint(findings, log):
 
 def _publications_readable(client, log):
     try:
-        data = client._gql('{ publications(first: 20, catalogType: APP) '
-                           '{ nodes { id catalog { title } } } }')
-        pubs = {(n.get("catalog") or {}).get("title") or "": n["id"]
-                for n in data["publications"]["nodes"]}
+        data = client._gql('{ publications(first: 20, catalogType: APP) { nodes { id '
+                           'catalog { ... on AppCatalog { apps(first: 1) { nodes { title } } } } } } }')
+        pubs = {}
+        for n in data["publications"]["nodes"]:
+            apps = (((n.get("catalog") or {}).get("apps") or {}).get("nodes")) or []
+            pubs[(apps[0].get("title") if apps else "") or n["id"]] = n["id"]
         with open(os.path.join(config.summaries_dir(), "publications.json"),
                   "w", encoding="utf-8") as fh:
             json.dump(pubs, fh, indent=2, ensure_ascii=False)
@@ -180,13 +182,17 @@ def pipeline(cached=False, force=False, pdf=False, lint_only=False, lag_hours=No
         attention.append(f"addon_missing={len(coverage['missing_tag'])}")
     if errors:
         attention.append(f"lint_errors={len(errors)}")
-    ch_rows, ch_counts, pubs_available = pass_channel_checks(products, cfg, fresh=not cached)
-    if ch_rows:
-        report.write_rows_csv(os.path.join(config.run_dir(stamp), f"channel-checks-{stamp}.csv"),
-                              ch_rows, CHANNEL_ROW_FIELDS)
-    log("  channel checks: " + ("  ".join(f"{k.replace('CHANNEL_', '')}={v}"
-                                          for k, v in sorted(ch_counts.items())) or "all clear")
-        + ("" if pubs_available else "  (section B skipped — no publication data in cache)"))
+    if any(p.get("variants_n") for p in products):
+        ch_rows, ch_counts, pubs_available = pass_channel_checks(products, cfg, fresh=not cached)
+        if ch_rows:
+            report.write_rows_csv(os.path.join(config.run_dir(stamp), f"channel-checks-{stamp}.csv"),
+                                  ch_rows, CHANNEL_ROW_FIELDS)
+        log("  channel checks: " + ("  ".join(f"{k.replace('CHANNEL_', '')}={v}"
+                                              for k, v in sorted(ch_counts.items())) or "all clear")
+            + ("" if pubs_available else "  (section B skipped — no publication data in cache)"))
+    else:
+        ch_rows, ch_counts, pubs_available = [], {}, False
+        log("  channel checks: skipped — cache predates channel fields (run a fresh pull).")
     for code in ("CHANNEL_GOOGLE_WITHOUT_STORE", "CHANNEL_OVER_250_VARIANTS"):
         if ch_counts.get(code):
             attention.append(f"{code}={ch_counts[code]}")

@@ -18,6 +18,7 @@ _PRODUCT_FIELDS = '''
         updatedAt
         onlineStoreUrl
         publishedAt
+        variantsCount { count }
         metafields {
           edges { node { namespace key value } }
         }
@@ -96,6 +97,7 @@ def load_products(jsonl_path):
                     "updated_at": _parse_dt(obj.get("updatedAt")),
                     "online_store_url": obj.get("onlineStoreUrl") or "",
                     "published_at": obj.get("publishedAt") or "",
+                    "variants_count": ((obj.get("variantsCount") or {}).get("count") or 0),
                 }
             elif parent and "key" in obj:
                 if obj.get("namespace", "custom") in MF_NAMESPACES:

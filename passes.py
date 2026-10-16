@@ -22,6 +22,11 @@ from rules import FILTER_HANDLES
 #   FILLED_DIVERGENT  matcher predicts a different canonical than stored; info only — tasks are
 #                     add_only and will never change a filled value
 
+COLOUR_WORDS = {"black", "white", "red", "blue", "green", "yellow", "orange",
+                "purple", "pink", "grey", "gray", "gold", "silver", "brown",
+                "navy", "maroon", "teal", "beige", "cream", "burgundy",
+                "turquoise", "aqua", "volt"}
+
 FALLBACK_GUARDS = {"williams", "lyon", "sunderland", "porto", "henry", "morgan",
                    "santos", "juarez", "araujo", "gordon"}
 FALLBACK_MIN_LEN = 4
@@ -64,7 +69,8 @@ def pass_filter_blanks(products, cfg, lag_hours=None, now=None):
         allowed = entry.get("_allowed") if entry else set()
         canonicals = entry.get("_canonicals") if entry else set()
 
-        vocab = {p[filter_key] for p in active if p[filter_key]}
+        vocab = {p[filter_key] for p in active if p[filter_key]
+                 and p[filter_key].strip().casefold() not in COLOUR_WORDS}
         scan = []
         for v in sorted((canonicals or set()) | vocab):
             nv = normalize(v)
@@ -213,8 +219,13 @@ def pass_channel_checks(products, cfg, now=None, fresh=True):
         ts_raw = mf.get("out_of_stock_at") or ""
         if sellable and ts_raw:
             add(p, "CHANNEL_STALE_TIMESTAMP", ts_raw)
-        if p.get("variants_n", 0) > 250:
-            add(p, "CHANNEL_OVER_250_VARIANTS", str(p["variants_n"]))
+        vcount = p.get("variants_count") or p.get("variants_n", 0)
+        if vcount > 250:
+            add(p, "CHANNEL_OVER_250_VARIANTS", str(vcount))
+        truncated = vcount > p.get("variants_n", 0)
+        if truncated and not sellable:
+            add(p, "CHANNEL_VARIANTS_TRUNCATED",
+                f"{p.get('variants_n', 0)} of {vcount} variants in cache")
         if marker_pubs and sellable and not off_store:
             pend_on_store.add(p["gid"])
             if p["gid"] in prev_on_store:
@@ -233,7 +244,7 @@ def pass_channel_checks(products, cfg, now=None, fresh=True):
                         add(p, "CHANNEL_MARKER_MISMATCH",
                             f"already_on={len(already_on)} missing={len(missing)}")
             ts = _channel_dt(ts_raw)
-            if not sellable and ts and (now - ts) > threshold and on_google:
+            if not sellable and not truncated and ts and (now - ts) > threshold and on_google:
                 add(p, "CHANNEL_OOS_ON_GOOGLE_PAST_THRESHOLD", ts_raw)
     keep_baseline = bool(state.get("fresh")) and saved_at is not None and not state_aged
     if fresh and not keep_baseline:
